@@ -23,3 +23,19 @@ android/app/build/
 *.apk
 *.aab
 *.so
+# Archivos de compilación (esto es lo que pesa)
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Android y iOS
+android/app/build/
+android/.gradle/
+ios/Pods/
+
+# Ejecutables
+*.apk
+*.ipa
+*.app
