@@ -1,0 +1,25 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+.vscode/
+build/
+ios/Pods/
+android/.gradle/
+android/app/build/
+
+# Generated files
+*.apk
+*.aab
+*.so
+*.log
+*.lock
+*.tmp
+
+build/
+android/app/build/
+*.apk
+*.aab
+*.so

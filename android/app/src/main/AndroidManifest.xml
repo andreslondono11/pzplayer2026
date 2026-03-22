@@ -1,0 +1,93 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+
+  <!-- ✅ Permisos -->
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+      tools:ignore="ScopedStorage" />
+
+  <application
+      android:name="${applicationName}"
+      android:label="Music Player B"
+      android:icon="@mipmap/ic_launcher"
+      android:requestLegacyExternalStorage="true">
+
+    <!-- ✅ Ícono de notificación -->
+    <meta-data
+        android:name="com.google.android.foreground_service.notification_icon"
+        android:resource="@drawable/ic_notification" />
+
+    <!-- ✅ Tema de Flutter -->
+    <meta-data
+        android:name="io.flutter.embedding.android.NormalTheme"
+        android:resource="@style/NormalTheme" />
+
+    <!-- ✅ Flutter embedding -->
+    <meta-data
+        android:name="flutterEmbedding"
+        android:value="2" />
+
+    <!-- ✅ Actividad principal -->
+    <activity
+        android:name="com.ryanheise.audioservice.AudioServiceActivity"
+        android:exported="true"
+        android:launchMode="singleTop"
+        android:taskAffinity=""
+        android:theme="@style/LaunchTheme"
+        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+        android:hardwareAccelerated="true"
+        android:windowSoftInputMode="adjustResize">
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="content" />
+        <data android:scheme="file" />
+        <data android:mimeType="audio/*" />
+      </intent-filter>
+    </activity>
+
+    <!-- ✅ Servicio de audio -->
+    <service
+        android:name="com.ryanheise.audioservice.AudioService"
+        android:foregroundServiceType="mediaPlayback"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.media.browse.MediaBrowserService" />
+      </intent-filter>
+    </service>
+
+    <!-- ✅ Receptor de botones multimedia -->
+    <receiver
+        android:name="com.ryanheise.audioservice.MediaButtonReceiver"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MEDIA_BUTTON" />
+      </intent-filter>
+    </receiver>
+
+  </application>
+
+  <!-- ✅ Soporte para compartir texto -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.PROCESS_TEXT" />
+      <data android:mimeType="text/plain" />
+    </intent>
+  </queries>
+</manifest>

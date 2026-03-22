@@ -1,0 +1,6 @@
+clave: Psline1*
+alias: PZPLATINUM
+clave: Psline1*
+
+fist  PZ
+organi unit  Player
