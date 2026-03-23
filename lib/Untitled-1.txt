@@ -678,3 +678,193 @@ class PlaylistButton extends StatelessWidget {
     );
   }
 }
+
+
+
+     "PZ Player presenta: $songTitle, el sonido que define tu camino.",
+
+      "Escucha $songTitle de $artist, un viaje sonoro único.",
+
+      "Deja que $songTitle te acompañe en tu momento de inspiración.",
+
+      "Con $songTitle, cada paso se siente más ligero.",
+
+      "El ritmo de $songTitle es la chispa que necesitas.",
+
+      "Nada mejor que $songTitle para empezar la mañana.",
+
+      "Sumérgete en $songTitle y olvida las preocupaciones.",
+
+      "El estilo de $artist en $songTitle es pura magia.",
+
+      "Haz que tu día brille con $songTitle.",
+
+      "Cuando suena $songTitle, todo se transforma.",
+
+      "La melodía de $songTitle es un abrazo sonoro.",
+
+      "Déjate llevar por la energía de $songTitle.",
+
+      "El flow de $songTitle te impulsa hacia adelante.",
+
+      "Con $songTitle, cada momento se vuelve especial.",
+
+      "El arte de $artist en $songTitle es inolvidable.",
+
+      "Escuchar $songTitle es como viajar sin moverte.",
+
+      "El ritmo de $songTitle te conecta con tu esencia.",
+
+      "Nada como $songTitle para recargar energías.",
+
+      "La vibra de $songTitle ilumina cualquier espacio.",
+
+      "Haz de $songTitle tu soundtrack personal.",
+
+      "El poder de $songTitle está en su sencillez.",
+
+      "Con $songTitle, la rutina se vuelve aventura.",
+
+      "El toque de $artist en $songTitle es único.",
+
+      "Cada nota de $songTitle es un recordatorio de alegría.",
+
+      "El beat de $songTitle es pura motivación.",
+
+      "Haz que $songTitle sea tu himno del día.",
+
+      "La fuerza de $songTitle te acompaña siempre.",
+
+      "El sonido de $songTitle es pura libertad.",
+
+      "Con $songTitle, todo parece posible.",
+
+      "El estilo de $songTitle es perfecto para relajarte.",
+
+      "Haz que $songTitle sea tu refugio musical.",
+
+      "El ritmo de $songTitle te invita a bailar.",
+
+      "Nada como $songTitle para cerrar el día.",
+
+      "El arte de $artist brilla en $songTitle.",
+
+      "Cada acorde de $songTitle es un regalo.",
+
+      "Haz que $songTitle sea tu momento zen.",
+
+      "El beat de $songTitle te llena de energía positiva.",
+
+      "Con $songTitle, la noche se vuelve mágica.",
+
+      "El poder de $songTitle está en su vibra.",
+
+      "Haz que $songTitle sea tu impulso creativo.",
+
+      "El ritmo de $songTitle es pura adrenalina.",
+
+      "Nada como $songTitle para inspirarte.",
+
+      "El estilo de $songTitle es perfecto para soñar.",
+
+      "Haz que $songTitle sea tu pausa musical.",
+
+      "El sonido de $songTitle es un viaje interior.",
+
+      "Con $songTitle, cada instante se disfruta más.",
+
+      "El beat de $songTitle es tu mejor compañía.",
+
+      "Haz que $songTitle sea tu energía diaria.",
+
+      "El arte de $artist se siente en cada nota de $songTitle.",
+
+      "Nada como $songTitle para acompañar tu camino.",
+
+      "El ritmo de $songTitle es pura motivación.",
+
+      "Haz que $songTitle sea tu inspiración constante.",
+
+      "El poder de $songTitle está en su esencia.",
+
+      "Con $songTitle, todo fluye mejor.",
+
+      "El estilo de $songTitle es perfecto para meditar.",
+
+      "Haz que $songTitle sea tu momento de calma.",
+
+      "El beat de $songTitle te conecta con la vida.",
+
+      "Nada como $songTitle para empezar con fuerza.",
+
+      "El sonido de $songTitle es pura emoción.",
+
+      "Haz que $songTitle sea tu chispa creativa.",
+
+      "El ritmo de $songTitle te invita a moverte.",
+
+      "Con $songTitle, cada día es especial.",
+
+      "El arte de $artist transforma $songTitle en magia.",
+
+      "Haz que $songTitle sea tu refugio sonoro.",
+
+      "El beat de $songTitle es tu motor interno.",
+
+      "Nada como $songTitle para relajarte al final del día.",
+
+      "El estilo de $songTitle es pura elegancia.",
+
+      "Haz que $songTitle sea tu energía nocturna.",
+
+      "El poder de $songTitle está en su ritmo.",
+
+      "Con $songTitle, todo se siente más ligero.",
+
+      "El sonido de $songTitle es pura inspiración.",
+
+      "Haz que $songTitle sea tu canción del momento.",
+
+      "El beat de $songTitle te impulsa hacia adelante.",
+
+      "Nada como $songTitle para acompañar tu viaje.",
+
+      "El arte de $artist en $songTitle es inolvidable.",
+
+      "Haz que $songTitle sea tu mantra musical.",
+
+      "El ritmo de $songTitle es pura alegría.",
+
+      "Con $songTitle, cada instante vibra más.",
+
+      "El estilo de $songTitle es perfecto para motivarte.",
+
+      "Haz que $songTitle sea tu pausa energética.",
+
+      "El sonido de $songTitle es pura calma.",
+
+      "Nada como $songTitle para encender tu día.",
+
+      "El beat de $songTitle es tu mejor aliado.",
+
+      "Haz que $songTitle sea tu soundtrack personal.",
+
+      "El poder de $songTitle está en su melodía.",
+
+      "Con $songTitle, todo se vuelve más brillante.",
+
+      "El arte de $artist se refleja en $songTitle.",
+
+      "Haz que $songTitle sea tu impulso diario.",
+
+      "El ritmo de $songTitle es pura pasión.",
+
+      "Nada como $songTitle para inspirar tu creatividad.",
+
+      "El estilo de $songTitle es perfecto para disfrutar.",
+
+      "Haz que $songTitle sea tu momento de paz.",
+
+      "El sonido de $songTitle es pura energía.",
+
+      "Con $songTitle, cada día se siente mejor.",

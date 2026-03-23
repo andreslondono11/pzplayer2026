@@ -1,18 +1,27 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
+import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Para carátulas eficientes
+import 'package:provider/provider.dart';
 import 'package:pzplayer/ui/widgets/playlist_detalle.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
-class PlaylistScreen extends StatelessWidget {
+class PlaylistScreen extends StatefulWidget {
   const PlaylistScreen({
     super.key,
     required String playlistName,
     required List<MediaItem> songs,
   });
+
+  @override
+  State<PlaylistScreen> createState() => _PlaylistScreenState();
+}
+
+class _PlaylistScreenState extends State<PlaylistScreen> {
+  // 🔑 Caché para evitar parpadeos en las miniaturas de las playlists
+  final Map<int, Uint8List?> _playlistArtCache = {};
 
   @override
   Widget build(BuildContext context) {
@@ -33,128 +42,7 @@ class PlaylistScreen extends StatelessWidget {
               Icons.add,
               color: isDark ? Colors.blueGrey : AppColors.primary,
             ),
-            onPressed: () async {
-              final nameController = TextEditingController();
-
-              await showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: Text(
-                    "Nueva Playlist",
-                    style: isDark
-                        ? AppTextStyles.subheadingDark
-                        : AppTextStyles.subheadingLight,
-                  ),
-                  content: TextField(
-                    controller: nameController,
-                    style: isDark
-                        ? AppTextStyles.bodyDark
-                        : AppTextStyles.bodyLight,
-                    decoration: InputDecoration(
-                      hintText: "Nombre",
-                      hintStyle: isDark
-                          ? AppTextStyles.captionDark
-                          : AppTextStyles.captionLight,
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        "Cancelar",
-                        style: isDark
-                            ? AppTextStyles.button
-                            : AppTextStyles.button2,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        final name = nameController.text;
-                        if (name.isNotEmpty) {
-                          context.read<AudioProvider>().createPlaylist(name);
-                          Navigator.pop(context);
-
-                          await showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (_) {
-                              final items = context.read<AudioProvider>().items;
-                              return SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.7,
-                                child: ListView.builder(
-                                  itemCount: items.length,
-                                  itemBuilder: (context, index) {
-                                    final song = items[index];
-                                    final dynamic rawCover =
-                                        song.extras?['coverBytes'];
-
-                                    Uint8List? coverBytes;
-                                    if (rawCover is Uint8List) {
-                                      coverBytes = rawCover;
-                                    } else if (rawCover is List<int>) {
-                                      coverBytes = Uint8List.fromList(rawCover);
-                                    } else if (rawCover is List<dynamic>) {
-                                      coverBytes = Uint8List.fromList(
-                                        List<int>.from(rawCover),
-                                      );
-                                    }
-
-                                    return ListTile(
-                                      leading: coverBytes != null
-                                          ? CircleAvatar(
-                                              backgroundImage: MemoryImage(
-                                                coverBytes,
-                                              ),
-                                            )
-                                          : Icon(
-                                              Icons.music_note,
-                                              color: isDark
-                                                  ? Colors.blueGrey
-                                                  : AppColors.primary,
-                                            ),
-                                      title: Text(
-                                        song.title,
-                                        style: isDark
-                                            ? AppTextStyles.bodyDark
-                                            : AppTextStyles.bodyLight,
-                                      ),
-                                      subtitle: Text(
-                                        song.artist ?? 'Desconocido',
-                                        style: isDark
-                                            ? AppTextStyles.captionDark
-                                            : AppTextStyles.captionLight,
-                                      ),
-                                      trailing: IconButton(
-                                        icon: Icon(
-                                          Icons.add_circle,
-                                          color: AppColors.primary,
-                                        ),
-                                        onPressed: () {
-                                          context
-                                              .read<AudioProvider>()
-                                              .addToPlaylist(name, song);
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          );
-                        }
-                      },
-                      child: Text(
-                        "Siguiente",
-                        style: isDark
-                            ? AppTextStyles.button
-                            : AppTextStyles.button2,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+            onPressed: () => _showCreatePlaylistDialog(context, isDark),
           ),
         ],
       ),
@@ -173,35 +61,15 @@ class PlaylistScreen extends StatelessWidget {
                 final playlistName = playlists.keys.elementAt(index);
                 final songs = playlists.values.elementAt(index);
 
+                // 🔑 Obtenemos el ID de la primera canción para la carátula de la lista
                 final firstSong = songs.isNotEmpty ? songs.first : null;
-                final dynamic rawCover = firstSong?.extras?['coverBytes'];
-
-                Uint8List? coverBytes;
-                if (rawCover is Uint8List) {
-                  coverBytes = rawCover;
-                } else if (rawCover is List<int>) {
-                  coverBytes = Uint8List.fromList(rawCover);
-                } else if (rawCover is List<dynamic>) {
-                  coverBytes = Uint8List.fromList(List<int>.from(rawCover));
-                }
+                final dynamic rawId = firstSong?.extras?['dbId'];
+                final int songId = (rawId is int)
+                    ? rawId
+                    : int.tryParse(rawId?.toString() ?? '0') ?? 0;
 
                 return ListTile(
-                  leading: coverBytes != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.memory(
-                            coverBytes,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            filterQuality: FilterQuality.high,
-                          ),
-                        )
-                      : Icon(
-                          Icons.queue_music,
-                          size: 40,
-                          color: isDark ? Colors.blueGrey : AppColors.primary,
-                        ),
+                  leading: _buildPlaylistArt(songId, isDark),
                   title: Text(
                     playlistName,
                     style: isDark
@@ -214,29 +82,16 @@ class PlaylistScreen extends StatelessWidget {
                         ? AppTextStyles.darktoi
                         : AppTextStyles.darktoa,
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // IconButton(
-                      //   icon: Icon(Icons.play_arrow, color: AppColors.primary),
-                      //   onPressed: () {
-                      //     context.read<AudioProvider>().playPlaylist(
-                      //       playlistName,
-                      //     );
-                      //   },
-                      // ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete,
-                          color: isDark ? Colors.blueGrey : AppColors.primary,
-                        ),
-                        onPressed: () {
-                          context.read<AudioProvider>().deletePlaylist(
-                            playlistName,
-                          );
-                        },
-                      ),
-                    ],
+                  trailing: IconButton(
+                    icon: Icon(
+                      Icons.delete,
+                      color: isDark ? Colors.blueGrey : AppColors.primary,
+                    ),
+                    onPressed: () {
+                      context.read<AudioProvider>().deletePlaylist(
+                        playlistName,
+                      );
+                    },
                   ),
                   onTap: () {
                     Navigator.push(
@@ -252,6 +107,101 @@ class PlaylistScreen extends StatelessWidget {
                 );
               },
             ),
+    );
+  }
+
+  // --- Widget de carátula con caché para evitar parpadeo ---
+  Widget _buildPlaylistArt(int songId, bool isDark) {
+    if (songId == 0) return _defaultIcon(isDark);
+
+    if (_playlistArtCache.containsKey(songId)) {
+      return _artContainer(_playlistArtCache[songId], isDark);
+    }
+
+    return FutureBuilder<Uint8List?>(
+      future: OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO, size: 150),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          _playlistArtCache[songId] = snapshot.data;
+          return _artContainer(snapshot.data, isDark);
+        }
+        return _artContainer(null, isDark);
+      },
+    );
+  }
+
+  Widget _artContainer(Uint8List? bytes, bool isDark) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 50,
+        height: 50,
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.05),
+        child: bytes != null
+            ? Image.memory(bytes, fit: BoxFit.cover)
+            : _defaultIcon(isDark),
+      ),
+    );
+  }
+
+  Widget _defaultIcon(bool isDark) {
+    return Icon(
+      Icons.queue_music,
+      size: 30,
+      color: isDark ? Colors.blueGrey : AppColors.primary,
+    );
+  }
+
+  // --- Diálogo de creación (Mantenido intacto) ---
+  Future<void> _showCreatePlaylistDialog(
+    BuildContext context,
+    bool isDark,
+  ) async {
+    final nameController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(
+          "Nueva Playlist",
+          style: isDark
+              ? AppTextStyles.subheadingDark
+              : AppTextStyles.subheadingLight,
+        ),
+        content: TextField(
+          controller: nameController,
+          style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
+          decoration: InputDecoration(
+            hintText: "Nombre",
+            hintStyle: isDark
+                ? AppTextStyles.captionDark
+                : AppTextStyles.captionLight,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Cancelar",
+              style: isDark ? AppTextStyles.button : AppTextStyles.button2,
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final name = nameController.text;
+              if (name.isNotEmpty) {
+                context.read<AudioProvider>().createPlaylist(name);
+                Navigator.pop(context);
+              }
+            },
+            child: Text(
+              "Guardar",
+              style: isDark ? AppTextStyles.button : AppTextStyles.button2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

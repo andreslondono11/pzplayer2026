@@ -1,7 +1,8 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
+import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Para las carátulas
+import 'package:provider/provider.dart';
 import 'package:pzplayer/ui/widgets/album_detalle.dart';
 import 'package:pzplayer/ui/widgets/artista_detalle.dart'
     show ArtistDetailScreen;
@@ -25,7 +26,9 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   // Optimizaciones de datos
   List<MediaItem> _sortedItems = [];
-  final Map<String, Uint8List?> _imageCache = {};
+
+  // 🔑 NUEVO CACHÉ: Guardamos las imágenes por ID para evitar parpadeos al hacer scroll
+  final Map<int, Uint8List?> _artworkCache = {};
 
   @override
   void initState() {
@@ -50,19 +53,6 @@ class _LibraryScreenState extends State<LibraryScreen>
         setState(() => _currentLetter = letter);
       }
     }
-  }
-
-  Uint8List? _getAndCacheImage(MediaItem item) {
-    if (_imageCache.containsKey(item.id)) return _imageCache[item.id];
-    final coverBytes = item.extras?['coverBytes'];
-    Uint8List? bytes;
-    if (coverBytes is Uint8List) {
-      bytes = coverBytes;
-    } else if (coverBytes is List) {
-      bytes = Uint8List.fromList(List<int>.from(coverBytes));
-    }
-    _imageCache[item.id] = bytes;
-    return bytes;
   }
 
   @override
@@ -96,11 +86,20 @@ class _LibraryScreenState extends State<LibraryScreen>
           cacheExtent: 1500,
           itemBuilder: (context, index) {
             final item = _sortedItems[index];
+
+            // 🔑 Extraemos el ID numérico de los extras
+            final dynamic rawId = item.extras?['dbId'];
+            final int songId = (rawId is int)
+                ? rawId
+                : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+
             return _SongListTile(
               key: ValueKey(item.id),
               item: item,
-              imageBytes: _getAndCacheImage(item),
+              songId: songId,
               isDark: isDark,
+              artworkCache:
+                  _artworkCache, // 👈 Pasamos el caché para evitar parpadeos
               onTap: () => audio.playItems(_sortedItems, startIndex: index),
               onMenuPressed: () => _showSongMenu(context, item, isLandscape),
             );
@@ -111,7 +110,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  // --- UI Components ---
+  // --- UI Components Mantenidos ---
 
   Widget _buildEmptyState(bool isDark) {
     return Center(
@@ -150,7 +149,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  // --- Menús y Navegación ---
+  // --- Menús y Navegación Mantenidos ---
 
   void _showSongMenu(BuildContext context, MediaItem song, bool isLandscape) {
     final audio = context.read<AudioProvider>();
@@ -158,14 +157,12 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled:
-          isLandscape, // Permite que el menú se vea bien en horizontal
+      isScrollControlled: isLandscape,
       constraints: isLandscape
           ? BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8)
           : null,
       builder: (_) => SafeArea(
         child: SingleChildScrollView(
-          // Necesario para landscape
           child: Wrap(
             children: [
               _menuTile(Icons.play_arrow, "Reproducir ahora", () {
@@ -299,31 +296,65 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 }
 
-// Celda de alto rendimiento
+// --- Celda de alto rendimiento SIN PARPADEO ---
 class _SongListTile extends StatelessWidget {
   final MediaItem item;
-  final Uint8List? imageBytes;
+  final int songId;
   final bool isDark;
   final VoidCallback onTap;
   final VoidCallback onMenuPressed;
+  final Map<int, Uint8List?> artworkCache; // 👈 Referencia al caché del padre
 
   const _SongListTile({
     super.key,
     required this.item,
-    this.imageBytes,
+    required this.songId,
     required this.isDark,
     required this.onTap,
     required this.onMenuPressed,
+    required this.artworkCache,
   });
 
   @override
   Widget build(BuildContext context) {
+    // 1. Si ya está en el caché, la dibujamos de inmediato (SIN PARPADEO)
+    if (artworkCache.containsKey(songId)) {
+      return _buildTile(artworkCache[songId]);
+    }
+
+    // 2. Si no, usamos FutureBuilder pero guardamos el resultado
+    return FutureBuilder<Uint8List?>(
+      future: songId == 0
+          ? Future.value(null)
+          : OnAudioQuery().queryArtwork(
+              songId,
+              ArtworkType.AUDIO,
+              format: ArtworkFormat.JPEG,
+              size: 150, // Pequeño para que el caché no use mucha RAM
+            ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          artworkCache[songId] = snapshot.data; // Guardamos para la próxima
+          return _buildTile(snapshot.data);
+        }
+        // Mientras carga, mostramos el estado vacío pero sin animaciones que distraigan
+        return _buildTile(null);
+      },
+    );
+  }
+
+  Widget _buildTile(Uint8List? imageBytes) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: isDark ? Colors.blueGrey : AppColors.primary,
-        backgroundImage: imageBytes != null ? MemoryImage(imageBytes!) : null,
+        backgroundColor: isDark
+            ? Colors.white.withOpacity(0.05)
+            : AppColors.primary.withOpacity(0.05),
+        backgroundImage: imageBytes != null ? MemoryImage(imageBytes) : null,
         child: imageBytes == null
-            ? const Icon(Icons.music_note, color: AppColors.white)
+            ? Icon(
+                Icons.music_note,
+                color: isDark ? Colors.blueGrey : AppColors.primary,
+              )
             : null,
       ),
       title: Text(
@@ -333,7 +364,7 @@ class _SongListTile extends StatelessWidget {
         style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
       ),
       subtitle: Text(
-        item.artist ?? '',
+        item.artist ?? 'Desconocido',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: isDark ? AppTextStyles.captionDark : AppTextStyles.captionLight,

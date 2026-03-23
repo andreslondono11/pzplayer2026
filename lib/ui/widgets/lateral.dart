@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:pzplayer/core/theme/theme_provider.dart';
 import 'package:pzplayer/core/theme/app_theme.dart';
 import 'package:pzplayer/core/theme/app_colors.dart';
+// Asegúrate de que esta ruta sea la correcta en tu proyecto
+import 'package:pzplayer/core/audio/audio_provider.dart';
 
 class MainDrawer extends StatelessWidget {
   const MainDrawer({super.key});
@@ -52,6 +54,8 @@ class MainDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeProvider = Provider.of<ThemeProvider>(context);
+    // Usamos context.read para acciones puntuales (no redibuja el drawer innecesariamente)
+    final audioProvider = context.read<AudioProvider>();
 
     return Drawer(
       child: Column(
@@ -117,16 +121,47 @@ class MainDrawer extends StatelessWidget {
                   ],
                 ),
 
+                // --- BOTÓN ACTUALIZAR LIBRERÍA ---
+                ListTile(
+                  leading: const Icon(Icons.refresh_rounded),
+                  title: const Text("Actualizar Librería"),
+                  subtitle: const Text(
+                    "Escanear nuevos archivos de audio",
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  onTap: () async {
+                    // Cerramos el drawer antes de empezar
+                    Navigator.pop(context);
+
+                    // Notificamos al usuario
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Buscando nueva música..."),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+
+                    try {
+                      // Ejecutamos la lógica de tu provider
+                      await audioProvider.refreshLibrary();
+                    } catch (e) {
+                      // Por si ocurre un error con los permisos o archivos
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error al actualizar: $e")),
+                      );
+                    }
+                  },
+                ),
+
                 const Divider(),
 
                 // --- INFORMACIÓN LEGAL Y TECNOLOGÍA ---
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
                   title: const Text("Políticas de Privacidad"),
-                  onTap: () => print("Navegar a políticas"),
+                  onTap: () => debugPrint("Navegar a políticas"),
                 ),
 
-                // OPCIÓN NATIVA DE FLUTTER (Muestra versiones de Flutter, Dart y paquetes)
                 ListTile(
                   leading: const Icon(Icons.code_rounded),
                   title: const Text("Tecnologías y Licencias"),
