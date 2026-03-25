@@ -679,9 +679,12 @@ class PlaylistButton extends StatelessWidget {
   }
 }
 
+"La canción $songTitle de $artist es ideal para levantar el ánimo.",
+      "Ponle volumen a $songTitle, te dará energía.",
+      "Relájate con $songTitle, es perfecta para la noche.",
+      "Que el beat de $songTitle sea el motor de tu día.",
 
-
-     "PZ Player presenta: $songTitle, el sonido que define tu camino.",
+      "Music Player presenta: $songTitle, el sonido que define tu camino.",
 
       "Escucha $songTitle de $artist, un viaje sonoro único.",
 
@@ -866,5 +869,3 @@ class PlaylistButton extends StatelessWidget {
       "Haz que $songTitle sea tu momento de paz.",
 
       "El sonido de $songTitle es pura energía.",
-
-      "Con $songTitle, cada día se siente mejor.",

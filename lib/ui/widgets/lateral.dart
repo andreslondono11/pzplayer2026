@@ -23,7 +23,7 @@ class MainDrawer extends StatelessWidget {
             const Icon(Icons.music_note, size: 50, color: AppColors.primary),
             const SizedBox(height: 15),
             const Text(
-              "Versión: 1.0.0+1",
+              "Versión: 4.2.3+4",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const Text("Build: 2026.03.21"),
@@ -78,7 +78,7 @@ class MainDrawer extends StatelessWidget {
               "Music Player",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            accountEmail: const Text("v2.0.15 Stable"),
+            accountEmail: const Text("v4.2.49 Stable"),
           ),
 
           Expanded(

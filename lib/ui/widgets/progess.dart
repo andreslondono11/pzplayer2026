@@ -30,15 +30,13 @@ class ProgressBarWidget extends StatelessWidget {
                       enabledThumbRadius: 6, // 🔑 pulgar pequeño
                     ),
                     overlayShape: RoundSliderOverlayShape(overlayRadius: 12),
-                    activeTrackColor: isDark
-                        ? Colors.blueGrey
-                        : AppColors.secondary,
+                    activeTrackColor: isDark ? Colors.white : Colors.black,
                     inactiveTrackColor:
                         Theme.of(context).brightness == Brightness.light
                         // ignore: deprecated_member_use
                         ? AppColors.textSecondary.withOpacity(0.3)
                         : Colors.white24,
-                    thumbColor: isDark ? Colors.blueGrey : AppColors.secondary,
+                    thumbColor: isDark ? Colors.white : Colors.black,
                   ),
                   child: Slider(
                     value: position.inMilliseconds.toDouble().clamp(

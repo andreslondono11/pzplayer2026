@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -17,7 +21,7 @@ import 'package:pzplayer/ui/widgets/folder_detalle.dart';
 import 'package:pzplayer/ui/widgets/genre_detalle.dart';
 import 'package:pzplayer/ui/widgets/lateral.dart';
 import 'package:pzplayer/ui/widgets/player_controls.dart';
-import 'package:pzplayer/ui/widgets/playlist_detalle.dart';
+// import 'package:pzplayer/ui/widgets/playlist_detalle.dart';
 import '../../core/audio/audio_provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -277,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-class SearchResultsWidget extends StatelessWidget {
+class SearchResultsWidget extends StatefulWidget {
   final String query;
   final AudioProvider audio;
 
@@ -288,214 +292,334 @@ class SearchResultsWidget extends StatelessWidget {
   });
 
   @override
+  State<SearchResultsWidget> createState() => _SearchResultsWidgetState();
+}
+
+class _SearchResultsWidgetState extends State<SearchResultsWidget> {
+  final Map<int, Uint8List?> _artworkCache = {};
+
+  @override
   Widget build(BuildContext context) {
-    final q = query.toLowerCase();
+    final q = widget.query.toLowerCase();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
-    // 🔎 Canciones
-    final songs = audio.items
-        .where(
-          (i) =>
-              i.title.toLowerCase().contains(q) ||
-              (i.artist ?? "").toLowerCase().contains(q) ||
-              (i.album ?? "").toLowerCase().contains(q) ||
-              (i.extras?['genre'] ?? "").toString().toLowerCase().contains(q),
-        )
-        .toList();
+    // 🔎 1. FILTRADO DE CANCIONES
+    final songs = widget.audio.items.where((i) {
+      return i.title.toLowerCase().contains(q) ||
+          (i.artist ?? "").toLowerCase().contains(q) ||
+          (i.album ?? "").toLowerCase().contains(q);
+    }).toList();
 
-    // 🔎 Álbumes
-    final albums = audio.items
+    // 🔎 2. FILTRADO DE ÁLBUMES
+    final albums = widget.audio.items
         .where((s) => (s.album ?? "").toLowerCase().contains(q))
         .map((s) => s.album ?? "")
         .toSet()
         .toList();
 
-    // 🔎 Artistas
-    final artists = audio.items
+    // 🔎 3. FILTRADO DE ARTISTAS
+    final artists = widget.audio.items
         .where((s) => (s.artist ?? "").toLowerCase().contains(q))
         .map((s) => s.artist ?? "")
         .toSet()
         .toList();
 
-    // 🔎 Géneros
-    final genres = audio.items
+    // 🔎 4. FILTRADO DE GÉNEROS
+    final genres = widget.audio.items
         .where(
           (s) =>
               (s.extras?['genre'] ?? "").toString().toLowerCase().contains(q),
         )
-        .map((s) => s.extras?['genre'] ?? "")
+        .map((s) => (s.extras?['genre'] ?? "").toString())
+        .where((g) => g.isNotEmpty)
         .toSet()
         .toList();
 
-    // 🔎 Carpetas
-    final folders = audio.items
+    // 🔎 5. FILTRADO DE CARPETAS (NUEVO)
+    final folders = widget.audio.items
         .where(
           (s) =>
               (s.extras?['folder'] ?? "").toString().toLowerCase().contains(q),
         )
-        .map((s) => s.extras?['folder'] ?? "")
+        .map((s) => (s.extras?['folder'] ?? "").toString())
+        .where((f) => f.isNotEmpty)
         .toSet()
         .toList();
 
-    // 🔎 Playlists
-    final playlists = audio.playlists.keys
-        .where((p) => p.toLowerCase().contains(q))
-        .toList();
-
     return ListView(
-      shrinkWrap: true, // evita desbordes
+      physics: const BouncingScrollPhysics(),
       children: [
-        // 🔹 Sección Canciones
-        if (songs.isNotEmpty)
+        // --- SECCIÓN CANCIONES ---
+        if (songs.isNotEmpty) ...[
           _sectionHeader(
             context,
             "Canciones (${songs.length})",
             Icons.library_music,
           ),
-        ...songs.map(
-          (s) => ListTile(
-            leading: const Icon(Icons.music_note, color: AppColors.accent),
-            title: Text(s.title, style: _bodyStyle(context)),
-            subtitle: Text(s.artist ?? '', style: _captionStyle(context)),
-            onTap: () => audio.play(s),
-          ),
-        ),
+          ...songs.map((item) {
+            final dynamic rawId = item.extras?['dbId'];
+            final int songId = (rawId is int)
+                ? rawId
+                : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+            return _SongListTile(
+              key: ValueKey(item.id),
+              item: item,
+              songId: songId,
+              isDark: isDark,
+              artworkCache: _artworkCache,
+              onTap: () => widget.audio.play(item),
+              onMenuPressed: () => _showSongMenu(context, item, isLandscape),
+            );
+          }),
+        ],
 
-        // 🔹 Sección Álbumes
-        if (albums.isNotEmpty)
+        // --- SECCIÓN ÁLBUMES ---
+        if (albums.isNotEmpty) ...[
           _sectionHeader(context, "Álbumes (${albums.length})", Icons.album),
-        ...albums.map(
-          (a) => ListTile(
-            leading: const Icon(Icons.album, color: AppColors.accent),
-            title: Text(a, style: _bodyStyle(context)),
-            onTap: () {
-              final filteredSongs = audio.items
-                  .where(
-                    (s) => (s.album ?? '').toLowerCase() == a.toLowerCase(),
-                  )
-                  .toList();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      AlbumDetailScreen(albumName: a, songs: filteredSongs),
-                ),
-              );
-            },
+          ...albums.map(
+            (a) => ListTile(
+              leading: Icon(
+                Icons.album,
+                color: isDark ? Colors.blueGrey : AppColors.accent,
+              ),
+              title: Text(a, style: _bodyStyle(context)),
+              onTap: () {
+                final filtered = widget.audio.items
+                    .where((s) => s.album == a)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        AlbumDetailScreen(albumName: a, songs: filtered),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        ],
 
-        // 🔹 Sección Artistas
-        if (artists.isNotEmpty)
+        // --- SECCIÓN ARTISTAS ---
+        if (artists.isNotEmpty) ...[
           _sectionHeader(context, "Artistas (${artists.length})", Icons.person),
-        ...artists.map(
-          (artist) => ListTile(
-            leading: const Icon(Icons.person, color: AppColors.accent),
-            title: Text(artist, style: _bodyStyle(context)),
-            onTap: () {
-              final filteredSongs = audio.items
-                  .where(
-                    (s) =>
-                        (s.artist ?? '').toLowerCase() == artist.toLowerCase(),
-                  )
-                  .toList();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ArtistDetailScreen(
-                    artistName: artist,
-                    songs: filteredSongs,
+          ...artists.map(
+            (art) => ListTile(
+              leading: Icon(
+                Icons.person,
+                color: isDark ? Colors.blueGrey : AppColors.accent,
+              ),
+              title: Text(art, style: _bodyStyle(context)),
+              onTap: () {
+                final filtered = widget.audio.items
+                    .where((s) => s.artist == art)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ArtistDetailScreen(artistName: art, songs: filtered),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
+        ],
 
-        // 🔹 Sección Géneros
-        if (genres.isNotEmpty)
+        // --- SECCIÓN GÉNEROS ---
+        if (genres.isNotEmpty) ...[
           _sectionHeader(context, "Géneros (${genres.length})", Icons.category),
-        ...genres.map(
-          (g) => ListTile(
-            leading: const Icon(Icons.category, color: AppColors.accent),
-            title: Text(g, style: _bodyStyle(context)),
-            onTap: () {
-              final filteredSongs = audio.items
-                  .where(
-                    (s) =>
-                        (s.extras?['genre'] ?? '').toString().toLowerCase() ==
-                        g.toLowerCase(),
-                  )
-                  .toList();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      GenreDetailScreen(genreName: g, songs: filteredSongs),
-                ),
-              );
-            },
-          ),
-        ),
-
-        // 🔹 Sección Carpetas
-        if (folders.isNotEmpty)
-          _sectionHeader(context, "Carpetas (${folders.length})", Icons.folder),
-        ...folders.map(
-          (f) => ListTile(
-            leading: const Icon(Icons.folder, color: AppColors.accent),
-            title: Text(f, style: _bodyStyle(context)),
-            onTap: () {
-              final filteredSongs = audio.items
-                  .where(
-                    (s) =>
-                        (s.extras?['folder'] ?? '').toLowerCase() ==
-                        f.toLowerCase(),
-                  )
-                  .toList();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      FolderDetailScreen(folderName: f, songs: filteredSongs),
-                ),
-              );
-            },
-          ),
-        ),
-
-        // 🔹 Sección Playlists
-        if (playlists.isNotEmpty)
-          _sectionHeader(
-            context,
-            "Playlists (${playlists.length})",
-            Icons.playlist_play,
-          ),
-        ...playlists.map(
-          (p) => ListTile(
-            leading: const Icon(Icons.playlist_play, color: AppColors.accent),
-            title: Text(p, style: _bodyStyle(context)),
-            onTap: () {
-              final filteredSongs = audio.playlists[p] ?? [];
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PlaylistDetailScreen(
-                    playlistName: p,
-                    songs: filteredSongs,
+          ...genres.map(
+            (g) => ListTile(
+              leading: Icon(
+                Icons.category,
+                color: isDark ? Colors.blueGrey : AppColors.accent,
+              ),
+              title: Text(g, style: _bodyStyle(context)),
+              onTap: () {
+                final filtered = widget.audio.items
+                    .where((s) => s.extras?['genre'] == g)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        GenreDetailScreen(genreName: g, songs: filtered),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
+        ],
+
+        // --- SECCIÓN CARPETAS (NUEVO) ---
+        if (folders.isNotEmpty) ...[
+          _sectionHeader(context, "Carpetas (${folders.length})", Icons.folder),
+          ...folders.map(
+            (f) => ListTile(
+              leading: Icon(
+                Icons.folder,
+                color: isDark ? Colors.blueGrey : AppColors.accent,
+              ),
+              title: Text(f, style: _bodyStyle(context)),
+              onTap: () {
+                final filtered = widget.audio.items
+                    .where((s) => s.extras?['folder'] == f)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        FolderDetailScreen(folderName: f, songs: filtered),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 100),
       ],
     );
   }
 
-  // 🔹 Helpers para estilos y encabezados
-  Widget _sectionHeader(BuildContext context, String text, IconData icon) {
+  // --- MANTENIENDO TU LÓGICA DE MENÚ Y ESTILOS ---
+  void _showSongMenu(BuildContext context, MediaItem song, bool isLandscape) {
+    final audio = context.read<AudioProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: isLandscape,
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          child: Wrap(
+            children: [
+              _menuTile(Icons.play_arrow, "Reproducir ahora", () {
+                Navigator.pop(context);
+                audio.play(song);
+              }, isDark),
+              _menuTile(Icons.queue_play_next, "Reproducir siguiente", () {
+                Navigator.pop(context);
+                audio.playNext(song);
+              }, isDark),
+              _menuTile(Icons.album, "Ir a álbum", () {
+                Navigator.pop(context);
+                final filtered = audio.items
+                    .where((s) => s.album == song.album)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AlbumDetailScreen(
+                      albumName: song.album ?? '',
+                      songs: filtered,
+                    ),
+                  ),
+                );
+              }, isDark),
+              _menuTile(Icons.person, "Ir a artista", () {
+                Navigator.pop(context);
+                final filtered = audio.items
+                    .where((s) => s.artist == song.artist)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ArtistDetailScreen(
+                      artistName: song.artist ?? '',
+                      songs: filtered,
+                    ),
+                  ),
+                );
+              }, isDark),
+              _menuTile(Icons.folder, "Ir a carpeta", () {
+                Navigator.pop(context);
+                final folder = song.extras?['folder'] ?? '';
+                final filtered = audio.items
+                    .where((s) => s.extras?['folder'] == folder)
+                    .toList();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        FolderDetailScreen(folderName: folder, songs: filtered),
+                  ),
+                );
+              }, isDark),
+              _menuTile(Icons.playlist_add, "Añadir a playlist", () {
+                Navigator.pop(context);
+                _showPlaylistSelector(context, song);
+              }, isDark),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // (El resto de helpers: _showPlaylistSelector, _menuTile, _sectionHeader, _bodyStyle permanecen igual)
+  void _showPlaylistSelector(BuildContext context, MediaItem song) {
+    final audio = context.read<AudioProvider>();
+    final playlists = audio.playlists.keys.toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(
+          "Selecciona playlist",
+          style: isDark ? AppTextStyles.darkto : AppTextStyles.darkti,
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: playlists.length,
+            itemBuilder: (context, index) {
+              final name = playlists[index];
+              return ListTile(
+                leading: Icon(
+                  Icons.queue_music,
+                  color: isDark ? Colors.blueGrey : AppColors.secondary,
+                ),
+                title: Text(
+                  name,
+                  style: isDark ? AppTextStyles.darkto : AppTextStyles.darkti,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  audio.addToPlaylist(name, song);
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _menuTile(
+    IconData icon,
+    String text,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.secondary),
+      leading: Icon(icon, color: isDark ? Colors.blueGrey : AppColors.primary),
+      title: Text(
+        text,
+        style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _sectionHeader(BuildContext context, String text, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ListTile(
+      leading: Icon(icon, color: isDark ? Colors.blueGrey : AppColors.accent),
       title: Text(
         text,
         style: Theme.of(context).brightness == Brightness.light
@@ -505,15 +629,89 @@ class SearchResultsWidget extends StatelessWidget {
     );
   }
 
-  TextStyle _bodyStyle(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? AppTextStyles.bodyLight
-        : AppTextStyles.bodyDark;
+  TextStyle _bodyStyle(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light
+      ? AppTextStyles.bodyLight
+      : AppTextStyles.bodyDark;
+}
+
+// (La clase _SongListTile permanece igual para el rendimiento)
+class _SongListTile extends StatelessWidget {
+  final MediaItem item;
+  final int songId;
+  final bool isDark;
+  final VoidCallback onTap;
+  final VoidCallback onMenuPressed;
+  final Map<int, Uint8List?> artworkCache;
+
+  const _SongListTile({
+    super.key,
+    required this.item,
+    required this.songId,
+    required this.isDark,
+    required this.onTap,
+    required this.onMenuPressed,
+    required this.artworkCache,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (artworkCache.containsKey(songId))
+      return _buildTile(artworkCache[songId]);
+
+    return FutureBuilder<Uint8List?>(
+      future: songId == 0
+          ? Future.value(null)
+          : OnAudioQuery().queryArtwork(
+              songId,
+              ArtworkType.AUDIO,
+              format: ArtworkFormat.JPEG,
+              size: 150,
+            ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          artworkCache[songId] = snapshot.data;
+          return _buildTile(snapshot.data);
+        }
+        return _buildTile(null);
+      },
+    );
   }
 
-  TextStyle _captionStyle(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? AppTextStyles.captionLight
-        : AppTextStyles.captionDark;
+  Widget _buildTile(Uint8List? imageBytes) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: isDark
+            ? Colors.white10
+            : AppColors.primary.withOpacity(0.05),
+        backgroundImage: imageBytes != null ? MemoryImage(imageBytes) : null,
+        child: imageBytes == null
+            ? Icon(
+                Icons.music_note,
+                color: isDark ? Colors.blueGrey : AppColors.primary,
+              )
+            : null,
+      ),
+      title: Text(
+        item.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
+      ),
+      subtitle: Text(
+        item.artist ?? 'Desconocido',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: isDark ? AppTextStyles.captionDark : AppTextStyles.captionLight,
+      ),
+      onTap: onTap,
+      trailing: IconButton(
+        icon: Icon(
+          Icons.more_vert,
+          color: isDark ? Colors.blueGrey : AppColors.secondary,
+        ),
+        onPressed: onMenuPressed,
+      ),
+    );
   }
 }

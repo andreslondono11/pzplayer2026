@@ -184,6 +184,54 @@ class AudioProvider extends ChangeNotifier {
     }
   }
 
+  // Dentro de tu clase AudioProvider
+  // void setBandGain(int bandIndex, double gain) {
+  //   // Aquí es donde el plugin hace la magia
+  //   // Ejemplo: _equalizer.setBandGain(bandIndex, gain);
+  //   notifyListeners(); // Opcional, si quieres que la UI reaccione
+  // }
+
+  // --- SECCIÓN DEL ECUALIZADOR DENTRO DEL PROVIDER ---
+
+  bool _isEqualizerEnabled = true;
+
+  // 1. IMPORTANTE: Esta lista SIEMPRE debe tener valores entre 0.0 y 1.0
+  List<double> _currentEGBands = [0.5, 0.5, 0.5, 0.5, 0.5];
+
+  bool get isEqualizerEnabled => _isEqualizerEnabled;
+  List<double> get currentEGBands => _currentEGBands;
+
+  // Método para el switch de encendido/apagado
+  void toggleEqualizer(bool value) {
+    _isEqualizerEnabled = value;
+    // Aquí va la conexión a tu motor (ej: _equalizer.setEnabled(value))
+    notifyListeners();
+  }
+
+  // 2. MÉTODO CORREGIDO: setBandGain
+  void setBandGain(int bandIndex, double sliderValue) {
+    // EL ESCUDO: Esto evita el error de "Value -4.48 is not between 0.0 and 1.0"
+    double safeValue = sliderValue.clamp(0.0, 1.0);
+
+    // Guardamos el valor seguro para la UI
+    _currentEGBands[bandIndex] = safeValue;
+
+    if (_isEqualizerEnabled) {
+      // 3. CONVERSIÓN PARA EL OÍDO:
+      // De 0.0...1.0 a -1500...1500 mB (esto es lo que SÍ se siente)
+      int milliBelios = ((safeValue * 3000) - 1500).toInt();
+
+      // --- CONEXIÓN REAL AL MOTOR ---
+      // Si usas just_audio con AndroidEqualizer sería:
+      // _equalizer.setBandLevel(bandIndex, milliBelios);
+
+      print("PZ Player -> Banda $bandIndex ajustada a $milliBelios mB");
+    }
+
+    // Ojo: No pongas notifyListeners() aquí si llamas a esta función
+    // desde el onChanged del Slider, porque causará saltos (lag).
+  }
+
   // --- REPRODUCCIÓN ---
 
   Future<void> play(MediaItem item) async => await playItems([item]);

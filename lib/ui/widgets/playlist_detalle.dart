@@ -210,6 +210,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
+import 'package:on_audio_query/on_audio_query.dart'; // Asegúrate de tener esta dependencia
 import 'package:pzplayer/ui/widgets/artista_detalle.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -246,7 +247,7 @@ class PlaylistDetailScreen extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Crucial para que no se corte en horizontal
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -416,9 +417,18 @@ class PlaylistDetailScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final firstSongCover = songs.isNotEmpty
-        ? _parseCover(songs.first.extras?['coverBytes'])
+
+    // --- LÓGICA DE IMAGEN MEJORADA ---
+    final firstSong = songs.isNotEmpty ? songs.first : null;
+    final firstSongCover = firstSong != null
+        ? _parseCover(firstSong.extras?['coverBytes'])
         : null;
+
+    // Intentamos obtener el ID de la base de datos para la búsqueda de respaldo
+    final dynamic rawId = firstSong?.extras?['dbId'];
+    final int songId = (rawId is int)
+        ? rawId
+        : int.tryParse(rawId?.toString() ?? '0') ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -437,17 +447,18 @@ class PlaylistDetailScreen extends StatelessWidget {
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      // Encabezado de Dos Columnas
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildCoverArt(
+                              // Usamos el constructor dinámico para la imagen principal
+                              _buildDynamicCover(
                                 firstSongCover,
+                                songId,
                                 isDark,
-                                size: isLandscape ? 100 : 140,
+                                isLandscape ? 100 : 140,
                               ),
                               const SizedBox(width: 20),
                               Expanded(
@@ -476,7 +487,6 @@ class PlaylistDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Lista de canciones
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverList(
@@ -488,6 +498,12 @@ class PlaylistDetailScreen extends StatelessWidget {
                             final Uint8List? songCover = _parseCover(
                               song.extras?['coverBytes'],
                             );
+
+                            // También para los items de la lista aplicamos respaldo por ID
+                            final dynamic sIdRaw = song.extras?['dbId'];
+                            final int sId = (sIdRaw is int)
+                                ? sIdRaw
+                                : int.tryParse(sIdRaw?.toString() ?? '0') ?? 0;
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
@@ -506,17 +522,12 @@ class PlaylistDetailScreen extends StatelessWidget {
                                     color: isDark
                                         ? Colors.blueGrey.withOpacity(0.2)
                                         : AppColors.primary.withOpacity(0.1),
-                                    child: songCover != null
-                                        ? Image.memory(
-                                            songCover,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Icon(
-                                            Icons.music_note,
-                                            color: isDark
-                                                ? Colors.white70
-                                                : AppColors.primary,
-                                          ),
+                                    child: _buildItemArt(
+                                      songCover,
+                                      sId,
+                                      isDark,
+                                      48,
+                                    ),
                                   ),
                                 ),
                                 title: Text(
@@ -556,7 +567,14 @@ class PlaylistDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCoverArt(Uint8List? cover, bool isDark, {double size = 140}) {
+  // --- WIDGETS DE IMAGEN CON RESPALDO (FIX) ---
+
+  Widget _buildDynamicCover(
+    Uint8List? cover,
+    int songId,
+    bool isDark,
+    double size,
+  ) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -570,20 +588,57 @@ class PlaylistDetailScreen extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: cover != null
-            ? Image.memory(cover, width: size, height: size, fit: BoxFit.cover)
-            : Container(
-                width: size,
-                height: size,
-                color: isDark
-                    ? Colors.blueGrey
-                    : AppColors.primary.withOpacity(0.2),
-                child: Icon(
-                  Icons.queue_music,
-                  size: size / 2,
-                  color: isDark ? Colors.white24 : AppColors.primary,
-                ),
-              ),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: cover != null
+              ? Image.memory(cover, fit: BoxFit.cover)
+              : (songId != 0)
+              ? FutureBuilder<Uint8List?>(
+                  future: OnAudioQuery().queryArtwork(
+                    songId,
+                    ArtworkType.AUDIO,
+                    size: 500,
+                  ),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data != null) {
+                      return Image.memory(snapshot.data!, fit: BoxFit.cover);
+                    }
+                    return _buildPlaceholder(isDark, size);
+                  },
+                )
+              : _buildPlaceholder(isDark, size),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemArt(Uint8List? cover, int songId, bool isDark, double size) {
+    if (cover != null) return Image.memory(cover, fit: BoxFit.cover);
+    if (songId == 0) return _buildPlaceholder(isDark, size);
+
+    return FutureBuilder<Uint8List?>(
+      future: OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO, size: 200),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          return Image.memory(snapshot.data!, fit: BoxFit.cover);
+        }
+        return _buildPlaceholder(isDark, size);
+      },
+    );
+  }
+
+  Widget _buildPlaceholder(bool isDark, double size) {
+    return Container(
+      width: size,
+      height: size,
+      color: isDark
+          ? Colors.blueGrey.withOpacity(0.3)
+          : AppColors.primary.withOpacity(0.2),
+      child: Icon(
+        Icons.queue_music,
+        size: size / 2,
+        color: isDark ? Colors.white24 : AppColors.primary,
       ),
     );
   }

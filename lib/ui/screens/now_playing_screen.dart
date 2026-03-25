@@ -1,19 +1,19 @@
 import 'dart:math';
 import 'dart:ui';
-import 'dart:typed_data'; // Import vital para Uint8List
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Import vital para queryArtwork
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:pzplayer/core/audio/audio_provider.dart';
+import 'package:pzplayer/core/audio/equalizador.dart';
 import 'package:pzplayer/core/theme/app_colors.dart';
 import 'package:pzplayer/core/theme/app_text_styles.dart';
 import 'package:pzplayer/ui/widgets/progess.dart';
-
-// Borramos el import problemático y movemos el widget PlaylistButton al final de este archivo.
-// import 'package:pzplayer/ui/widgets/playlist_button.dart';
+// 🔑 Importante: Asegúrate de que esta ruta sea correcta según tu proyecto
+// import 'package:pzplayer/ui/screens/equalizer_screen.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -26,8 +26,6 @@ class _PlayerScreenState extends State<PlayerScreen>
     with SingleTickerProviderStateMixin {
   final FlutterTts _tts = FlutterTts();
   late AnimationController _rotationController;
-
-  // 🔑 Caché para la portada del disco para evitar parpadeos al girar
   final Map<int, Uint8List?> _coverCache = {};
 
   @override
@@ -55,12 +53,16 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   String _randomAdvice(String songTitle, String? artist) {
     final frases = [
+      "Con $songTitle, cada día se siente mejor.",
+      "Pzplatinum te dice gracias por estar aquí y no olvides compartir esta aplicación",
+      "Este artista $artist es de los mejores en su carrera.",
+
       "La canción $songTitle de $artist es ideal para levantar el ánimo.",
       "Ponle volumen a $songTitle, te dará energía.",
       "Relájate con $songTitle, es perfecta para la noche.",
       "Que el beat de $songTitle sea el motor de tu día.",
 
-      "PZ Player presenta: $songTitle, el sonido que define tu camino.",
+      "Music Player presenta: $songTitle, el sonido que define tu camino.",
 
       "Escucha $songTitle de $artist, un viaje sonoro único.",
 
@@ -245,8 +247,6 @@ class _PlayerScreenState extends State<PlayerScreen>
       "Haz que $songTitle sea tu momento de paz.",
 
       "El sonido de $songTitle es pura energía.",
-
-      "Con $songTitle, cada día se siente mejor.",
     ];
     return frases[Random().nextInt(frases.length)];
   }
@@ -257,7 +257,6 @@ class _PlayerScreenState extends State<PlayerScreen>
     final current = audio.current;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Manejo inteligente de la animación del disco
     if (audio.isPlaying && !_rotationController.isAnimating) {
       _rotationController.repeat();
     } else if (!audio.isPlaying && _rotationController.isAnimating) {
@@ -268,7 +267,6 @@ class _PlayerScreenState extends State<PlayerScreen>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // 🔑 CAMBIO 1: Extraemos el dbId en lugar de intentar normalizar coverBytes
     final dynamic rawId = current.extras?['dbId'];
     final int songId = (rawId is int)
         ? rawId
@@ -277,7 +275,6 @@ class _PlayerScreenState extends State<PlayerScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 🔑 CAMBIO 2: Pasamos el songId al fondo dinámico
           _buildDynamicBackground(songId, isDark),
           SafeArea(
             child: LayoutBuilder(
@@ -317,28 +314,20 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  // 🔑 Fondo dinámico ahora usa FutureBuilder con el songId
   Widget _buildDynamicBackground(int songId, bool isDark) {
     if (songId == 0) return _defaultGradient(isDark);
-
     return FutureBuilder<Uint8List?>(
-      // Usamos una cache separada o la misma, pero cargamos tamaño grande para el fondo
       future: OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO, size: 800),
       builder: (context, snapshot) {
         final Uint8List? bytes = snapshot.data;
-
         return Container(
           decoration: BoxDecoration(
-            // gradient: bytes == null ? _defaultGradient(isDark).gradient : null,
             image: bytes != null
                 ? DecorationImage(image: MemoryImage(bytes), fit: BoxFit.cover)
                 : null,
           ),
           child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: 15.0,
-              sigmaY: 15.0,
-            ), // Más blur para el fondo
+            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
             child: Container(
               color: isDark
                   ? Colors.black.withOpacity(0.4)
@@ -381,7 +370,6 @@ class _PlayerScreenState extends State<PlayerScreen>
           ),
         ),
         const Spacer(),
-        // 🔑 CAMBIO 3: Pasamos songId a _buildCover
         _buildCover(audio, current, songId, 300),
         const Spacer(),
         _buildMetadata(current, isDark),
@@ -446,7 +434,6 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  // 🔑 _buildCover corregido para usar songId y FutureBuilder
   Widget _buildCover(
     AudioProvider audio,
     MediaItem current,
@@ -463,7 +450,6 @@ class _PlayerScreenState extends State<PlayerScreen>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Sombra del disco
           Container(
             width: size,
             height: size,
@@ -478,7 +464,6 @@ class _PlayerScreenState extends State<PlayerScreen>
               ],
             ),
           ),
-          // Vinilo giratorio
           RotationTransition(
             turns: _rotationController,
             child: Container(
@@ -499,12 +484,10 @@ class _PlayerScreenState extends State<PlayerScreen>
               child: CustomPaint(painter: VinylLinesPainter()),
             ),
           ),
-          // 🔑 Imagen central giratoria con FutureBuilder y Caché
           RotationTransition(
             turns: _rotationController,
             child: ClipOval(child: _buildDiskArt(songId, size * 0.45)),
           ),
-          // Punto central fijo
           Container(
             width: 12,
             height: 12,
@@ -521,24 +504,18 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  // 🔑 Widget auxiliar para cargar la portada del disco con caché
   Widget _buildDiskArt(int songId, double artsize) {
     if (songId == 0) return _defaultDiskIcon(artsize);
-
-    // Si ya está en caché, la cargamos al instante (sin parpadeo)
-    if (_coverCache.containsKey(songId)) {
+    if (_coverCache.containsKey(songId))
       return _diskImageContainer(_coverCache[songId], artsize);
-    }
 
-    // Si no, la buscamos
     return FutureBuilder<Uint8List?>(
       future: OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO, size: 500),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          _coverCache[songId] = snapshot.data; // Guardamos en caché
+          _coverCache[songId] = snapshot.data;
           return _diskImageContainer(snapshot.data, artsize);
         }
-        // Mientras carga, mostramos el contenedor vacío para mantener la forma
         return _diskImageContainer(null, artsize);
       },
     );
@@ -641,21 +618,31 @@ class _PlayerScreenState extends State<PlayerScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const PlaylistButton(), // 👈 Widget movido abajo
-              const SizedBox(width: 25),
+              const PlaylistButton(),
+              const SizedBox(width: 15),
+              // 🔑 BOTÓN DE ECUALIZADOR AÑADIDO AQUÍ
+              IconButton(
+                icon: const Icon(Icons.equalizer_rounded, size: 28),
+                color: isDark ? Colors.white70 : Colors.black54,
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EqualizerScreen()),
+                ),
+              ),
+              const SizedBox(width: 15),
               IconButton(
                 icon: Icon(
                   audio.shuffleEnabled
                       ? Icons.shuffle_on_rounded
                       : Icons.shuffle_rounded,
                   size: 28,
-                  color: audio.shuffleEnabled
-                      ? Colors.blueAccent
-                      : (isDark ? Colors.white70 : Colors.black54),
                 ),
+                color: audio.shuffleEnabled
+                    ? Colors.blueGrey
+                    : (isDark ? Colors.white70 : Colors.black54),
                 onPressed: () => audio.toggleShuffle(),
               ),
-              const SizedBox(width: 25),
+              const SizedBox(width: 15),
               IconButton(
                 icon: Icon(
                   audio.loopMode == LoopMode.one
@@ -664,10 +651,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ? Icons.repeat_on_rounded
                       : Icons.repeat_rounded,
                   size: 28,
-                  color: audio.loopMode != LoopMode.off
-                      ? Colors.blueAccent
-                      : (isDark ? Colors.white70 : Colors.black54),
                 ),
+                color: audio.loopMode != LoopMode.off
+                    ? Colors.blueGrey
+                    : (isDark ? Colors.white70 : Colors.black54),
                 onPressed: () => audio.toggleLoopMode(),
               ),
             ],
@@ -742,14 +729,11 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 }
 
-// --- WIDGETS AUXILIARES MANTENIDOS ---
-
 class VinylLinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white
-          .withOpacity(0.06) // Un poco más sutil
+      ..color = Colors.white.withOpacity(0.06)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     final center = Offset(size.width / 2, size.height / 2);
@@ -762,6 +746,8 @@ class VinylLinesPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+// Widget PlaylistButton ficticio para que compile si no lo tienes importado
+
 // 🔑 Widget PlaylistButton movido aquí para solucionar el import
 class PlaylistButton extends StatelessWidget {
   const PlaylistButton({super.key});
@@ -773,7 +759,7 @@ class PlaylistButton extends StatelessWidget {
       icon: Icon(
         Icons.queue_music,
         size: 30,
-        color: isDark ? Colors.blueGrey : AppColors.primary,
+        color: isDark ? Colors.white : Colors.black,
       ),
       onPressed: () => _showQueueModal(context, isDark),
     );
