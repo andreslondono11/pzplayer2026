@@ -678,8 +678,11 @@ class PlaylistButton extends StatelessWidget {
     );
   }
 }
+  "Con $songTitle, cada día se siente mejor.",
+      "Pzplatinum te dice gracias por estar aquí y no olvides compartir esta aplicación",
+      "Este artista $artist es de los mejores en su carrera.",
 
-"La canción $songTitle de $artist es ideal para levantar el ánimo.",
+      "La canción $songTitle de $artist es ideal para levantar el ánimo.",
       "Ponle volumen a $songTitle, te dará energía.",
       "Relájate con $songTitle, es perfecta para la noche.",
       "Que el beat de $songTitle sea el motor de tu día.",

@@ -331,6 +331,7 @@ class ArtistDetailScreen extends StatelessWidget {
                         width: 45,
                         height: 5,
                         decoration: BoxDecoration(
+                          // ignore: deprecated_member_use
                           color: Colors.grey.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -592,7 +593,9 @@ class ArtistDetailScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         elevation: 0,
                         color: isDark
+                            // ignore: deprecated_member_use
                             ? Colors.white.withOpacity(0.05)
+                            // ignore: deprecated_member_use
                             : Colors.black.withOpacity(0.03),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),

@@ -320,7 +320,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                 "Eliminar de esta playlist",
                 () {
                   Navigator.pop(context);
-                  audio.removeFromPlaylist(playlistName, song);
+                  audio.deletePlaylist(playlistName);
                 },
                 isDark,
                 isDelete: true,
@@ -512,6 +512,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 tileColor: isDark
+                                    // ignore: deprecated_member_use
                                     ? Colors.blueGrey.withOpacity(0.05)
                                     : AppColors.background.withOpacity(0.5),
                                 leading: ClipRRect(

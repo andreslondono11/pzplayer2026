@@ -23,7 +23,7 @@ class MainDrawer extends StatelessWidget {
             const Icon(Icons.music_note, size: 50, color: AppColors.primary),
             const SizedBox(height: 15),
             const Text(
-              "Versión: 4.2.3+4",
+              "Versión: 6.25.1+6",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const Text("Build: 2026.03.21"),
@@ -64,6 +64,7 @@ class MainDrawer extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.black26
+                  // ignore: deprecated_member_use
                   : AppColors.primary.withOpacity(0.8),
             ),
             currentAccountPicture: CircleAvatar(
@@ -78,7 +79,7 @@ class MainDrawer extends StatelessWidget {
               "Music Player",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            accountEmail: const Text("v4.2.49 Stable"),
+            accountEmail: const Text("v6.3.555 Stable"),
           ),
 
           Expanded(
@@ -101,21 +102,27 @@ class MainDrawer extends StatelessWidget {
                     RadioListTile<ThemeMode>(
                       title: const Text("Modo Claro"),
                       value: ThemeMode.light,
+                      // ignore: deprecated_member_use
                       groupValue: themeProvider.themeMode,
+                      // ignore: deprecated_member_use
                       onChanged: (val) =>
                           themeProvider.setTheme(AppTheme.lightTheme),
                     ),
                     RadioListTile<ThemeMode>(
                       title: const Text("Modo Oscuro"),
                       value: ThemeMode.dark,
+                      // ignore: deprecated_member_use
                       groupValue: themeProvider.themeMode,
+                      // ignore: deprecated_member_use
                       onChanged: (val) =>
                           themeProvider.setTheme(AppTheme.darkTheme),
                     ),
                     RadioListTile<ThemeMode>(
                       title: const Text("Usar Sistema"),
                       value: ThemeMode.system,
+                      // ignore: deprecated_member_use
                       groupValue: themeProvider.themeMode,
+                      // ignore: deprecated_member_use
                       onChanged: (val) => themeProvider.setSystemTheme(),
                     ),
                   ],
@@ -146,6 +153,7 @@ class MainDrawer extends StatelessWidget {
                       await audioProvider.refreshLibrary();
                     } catch (e) {
                       // Por si ocurre un error con los permisos o archivos
+                      // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Error al actualizar: $e")),
                       );
@@ -173,7 +181,7 @@ class MainDrawer extends StatelessWidget {
                     showAboutDialog(
                       context: context,
                       applicationName: "Music Player",
-                      applicationVersion: "2.0.1+2",
+                      applicationVersion: "6.0.5+6",
                       applicationIcon: Icon(
                         Icons.play_circle_fill,
                         size: 45,
