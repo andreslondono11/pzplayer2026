@@ -2,15 +2,50 @@
 
 aplicacion musica
 
-## Getting Started
+# 🎵 Music Player Flutter
 
-This project is a starting point for a Flutter application.
+Un reproductor de música moderno construido con **Flutter**, usando `just_audio` y `audio_service`.  
+Incluye carátulas sincronizadas en tiempo real, notificaciones persistentes con controles, y un asistente IA que da consejos motivacionales en voz alta.
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## ✨ Características
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Reproducción de audio con `just_audio`
+- Notificaciones en segundo plano con portada embebida
+- Sincronización en tiempo real entre UI y notificación
+- Cambio de tema (oscuro/claro) con persistencia de preferencias
+- Overlays flotantes y accesibilidad mejorada
+- Asistente IA que sugiere canciones y da consejos motivacionales aleatorios
+
+---
+
+## 🏗️ Arquitectura
+
+- **AudioProvider** centraliza la lógica de reproducción
+- **AudioServiceHandler** gestiona notificaciones y estado
+- **PlayerScreen** con integración del asistente IA
+- **SearchResultsWidget** con navegación específica y filtrada
+- **ThemeManager** para persistencia de preferencias
+
+---
+
+## 🚀 Instalación
+
+```bash
+git clone https://github.com/tuusuario/music_player_flutter.git
+cd music_player_flutter
+flutter pub get
+flutter run
+
+
+## 📸 Capturas de Pantalla
+
+### Pantalla Principal
+![Pantalla Principal](assets/screenshots/home.png)
+
+### Reproducción con Notificación
+![Notificación en segundo plano](assets/img/notification.png)
+
+### Asistente IA en PlayerScreen
+![Asistente IA](assets/screenshots/assistant.png)
