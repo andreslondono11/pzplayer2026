@@ -38,16 +38,16 @@ cd music_player_flutter
 flutter pub get
 flutter run
 
-
 ## 📸 Capturas de Pantalla
 
-![Pantalla Principal](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png?raw=true)
-![Notificación](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/2.png?raw=true)
-![Asistente IA](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/3.png?raw=true)
+| Pantalla Principal | Notificación | Asistente IA |
+| :---: | :---: | :---: |
+| ![Pantalla Principal](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png) | ![Notificación](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png) | ![Asistente IA](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png) |
 
 
-<h2>📸 Capturas de Pantalla</h2>
 
-<img src="https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png?raw=true" alt="Pantalla Principal" width="300"/>
-<img src="https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/2.png?raw=true" alt="Notificación" width="300"/>
-<img src="https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/3.png?raw=true" alt="Asistente IA" width="300"/>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png" width="250" alt="Pantalla Principal">
+  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="250" alt="Notificación">
+  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="250" alt="Asistente IA">
+</p>
