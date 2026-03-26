@@ -41,11 +41,9 @@ flutter run
 
 ## 📸 Capturas de Pantalla
 
-### Pantalla Principal
-![Pantalla Principal](assets/screenshots/1.png)
+<h2>📸 Capturas de Pantalla</h2>
 
-### Reproducción con Notificación
-![Notificación en segundo plano](assets/img/notification.png)
+<img src="assets/screenshots/1.png" alt="Pantalla Principal" width="300"/>
+<img src="assets/screenshots/2.png" alt="Notificación" width="300"/>
+<img src="assets/screenshots/3.png" alt="Asistente IA" width="300"/>
 
-### Asistente IA en PlayerScreen
-![Asistente IA](assets/screenshots/assistant.png)
