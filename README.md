@@ -43,7 +43,7 @@ flutter run
 
 <h2>📸 Capturas de Pantalla</h2>
 
-![Pantalla Principal](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png?raw=true)
+![Pantalla Principal]([https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png?raw=true](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png))
 ![Notificación](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/2.png?raw=true)
 ![Asistente IA](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/3.png?raw=true)
 
