@@ -66,6 +66,8 @@ Es la más rápida. Solo pega esto en una línea vacía:
 ### 2. La forma profesional (HTML)
 Esta es la que yo te recomendé porque permite **centrar** y **cambiar el tamaño** (si no, la imagen sale gigante).
 ```html
+
+
 <p align="center">
   <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)" width="300">
 </p>
