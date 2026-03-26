@@ -30,24 +30,29 @@ Incluye carátulas sincronizadas en tiempo real, notificaciones persistentes con
 
 ---
 
+# 🎵 PZ Player 2026
+
+Reproductor de música avanzado desarrollado con Flutter, con ecualizador profesional e integración de IA.
+
 ## 🚀 Instalación
 
 ```bash
-git clone https://github.com/tuusuario/music_player_flutter.git
-cd music_player_flutter
+# Clonar el repositorio
+git clone [https://github.com/andreslondono11/pzplayer2026.git](https://github.com/andreslondono11/pzplayer2026.git)
+
+# Entrar al directorio
+cd pzplayer2026
+
+# Instalar dependencias
 flutter pub get
+
+# Ejecutar la aplicación
 flutter run
 
-## 📸 Capturas de Pantalla
 
-| Pantalla Principal | Notificación | Asistente IA |
-| :---: | :---: | :---: |
-| ![Pantalla Principal](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png) | ![Notificación](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png) | ![Asistente IA](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png) |
-
-
-
+# 📸 Capturas de Pantalla
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png" width="250" alt="Pantalla Principal">
-  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="250" alt="Notificación">
-  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="250" alt="Asistente IA">
+<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png" width="280" alt="Pantalla Principal">
+<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="280" alt="Notificación">
+<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="280" alt="Asistente IA">
 </p>
