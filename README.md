@@ -18,8 +18,11 @@ Personalización: Soporte para modo claro y oscuro con persistencia.
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png" width="280" alt="Pantalla Principal">
-<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="280" alt="Notificación">
-<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="280" alt="Asistente IA">
+<img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="280" alt="Pantalla Principal">
+<<img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="280" alt="Pantalla Principal">"Asistente IA">
+<img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/4.png" width="280" alt="Pantalla Principal">
+<img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/5.png" width="280" alt="Pantalla Principal">
+  
 </p>
 
 🏗️ Arquitectura
