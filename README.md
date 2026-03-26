@@ -53,7 +53,7 @@ flutter run
 ## 📸 Capturas de Pantalla
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png" width="280" alt="Pantalla Principal">
-  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="280" alt="Notificación">
-  <img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="280" alt="Asistente IA">
+  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)" width="280" alt="Pantalla Principal">
+  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png)" width="280" alt="Notificación">
+  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png)" width="280" alt="Asistente IA">
 </p>
