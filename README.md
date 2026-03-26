@@ -42,7 +42,7 @@ flutter run
 ## 📸 Capturas de Pantalla
 
 ### Pantalla Principal
-![Pantalla Principal](assets/screenshots/home.png)
+![Pantalla Principal](assets/screenshots/1.png)
 
 ### Reproducción con Notificación
 ![Notificación en segundo plano](assets/img/notification.png)
