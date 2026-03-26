@@ -47,7 +47,7 @@ flutter run
 ![Notificación](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/2.png?raw=true)
 ![Asistente IA](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/3.png?raw=true)
 
-
+https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png
 <img src="assets/screenshots/1.png" alt="Pantalla Principal" width="300"/>
 <img src="assets/screenshots/2.png" alt="Notificación" width="300"/>
 <img src="assets/screenshots/3.png" alt="Asistente IA" width="300"/>
