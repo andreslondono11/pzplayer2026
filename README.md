@@ -52,8 +52,26 @@ flutter run
 
 ## 📸 Capturas de Pantalla
 
+---
+
+### 1. La forma estándar (Markdown)
+Es la más rápida. Solo pega esto en una línea vacía:
+`![Texto Alternativo](URL_DE_LA_IMAGEN)`
+
+**Ejemplo real para tu PZ Player:**
+```markdown
+![Pantalla Principal](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)
+```
+
+### 2. La forma profesional (HTML)
+Esta es la que yo te recomendé porque permite **centrar** y **cambiar el tamaño** (si no, la imagen sale gigante).
+```html
 <p align="center">
-  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)" width="280" alt="Pantalla Principal">
-  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png)" width="280" alt="Notificación">
-  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png)" width="280" alt="Asistente IA">
+  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)" width="300">
 </p>
+```
+
+### 3. Usando rutas relativas (La más limpia)
+Si la imagen está en el mismo proyecto, no necesitas la URL larga de internet. GitHub es inteligente y la busca solo:
+```markdown
+![Principal](assets/screenshots/1.png)
