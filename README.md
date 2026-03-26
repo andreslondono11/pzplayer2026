@@ -43,12 +43,9 @@ flutter run
 
 <h2>📸 Capturas de Pantalla</h2>
 
-![Pantalla Principal]([https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png?raw=true](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png))
-![Notificación](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/2.png?raw=true)
-![Asistente IA](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/3.png?raw=true)
+<h2>📸 Capturas de Pantalla</h2>
 
-
-<img src="[assets/screenshots/1.png](https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png)" alt="Pantalla Principal" width="300"/>
-<img src="assets/screenshots/2.png" alt="Notificación" width="300"/>
-<img src="assets/screenshots/3.png" alt="Asistente IA" width="300"/>
+<img src="https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/1.png?raw=true" alt="Pantalla Principal" width="300"/>
+<img src="https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/2.png?raw=true" alt="Notificación" width="300"/>
+<img src="https://github.com/andreslondono11/pzplayer2026/blob/main/assets/screenshots/3.png?raw=true" alt="Asistente IA" width="300"/>
 
