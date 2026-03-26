@@ -1,79 +1,58 @@
-# pzplayer
+🎵 PZ Player 2026
 
-aplicacion musica
+Reproductor de música avanzado desarrollado con Flutter, utilizando just_audio y audio_service. Incluye carátulas sincronizadas, notificaciones interactivas y un asistente de IA motivacional.
 
-# 🎵 Music Player Flutter
+✨ Características
 
-Un reproductor de música moderno construido con **Flutter**, usando `just_audio` y `audio_service`.  
-Incluye carátulas sincronizadas en tiempo real, notificaciones persistentes con controles, y un asistente IA que da consejos motivacionales en voz alta.
+Reproducción Pro: Basado en just_audio para una experiencia fluida.
 
----
+Ecualizador: Control de 5 bandas con presets personalizables.
 
-## ✨ Características
+Asistente IA: Integración con Gemini para consejos y sugerencias.
 
-- Reproducción de audio con `just_audio`
-- Notificaciones en segundo plano con portada embebida
-- Sincronización en tiempo real entre UI y notificación
-- Cambio de tema (oscuro/claro) con persistencia de preferencias
-- Overlays flotantes y accesibilidad mejorada
-- Asistente IA que sugiere canciones y da consejos motivacionales aleatorios
+Notificaciones: Control total desde la barra de estado y pantalla de bloqueo.
 
----
+Personalización: Soporte para modo claro y oscuro con persistencia.
 
-## 🏗️ Arquitectura
+📸 Capturas de Pantalla
 
-- **AudioProvider** centraliza la lógica de reproducción
-- **AudioServiceHandler** gestiona notificaciones y estado
-- **PlayerScreen** con integración del asistente IA
-- **SearchResultsWidget** con navegación específica y filtrada
-- **ThemeManager** para persistencia de preferencias
+<p align="center">
+<img src="https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png" width="280" alt="Pantalla Principal">
+<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/2.png" width="280" alt="Notificación">
+<img src="https://www.google.com/search?q=https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/3.png" width="280" alt="Asistente IA">
+</p>
 
----
+🏗️ Arquitectura
 
-# 🎵 PZ Player 2026
+AudioProvider: Gestión del estado global de la música.
 
-Reproductor de música avanzado desarrollado con Flutter, con ecualizador profesional e integración de IA.
+AudioServiceHandler: Manejo de servicios en segundo plano.
 
-## 🚀 Instalación
+ThemeManager: Control de estilos y preferencias de usuario.
 
-```bash
-# Clonar el repositorio
+🚀 Instalación
+
+Sigue estos pasos para ejecutar el proyecto localmente:
+
+# 1. Clonar el repositorio
 git clone [https://github.com/andreslondono11/pzplayer2026.git](https://github.com/andreslondono11/pzplayer2026.git)
 
-# Entrar al directorio
+# 2. Entrar a la carpeta
 cd pzplayer2026
 
-# Instalar dependencias
+# 3. Instalar dependencias
 flutter pub get
 
-# Ejecutar la aplicación
+# 4. Ejecutar app
 flutter run
 
 
-## 📸 Capturas de Pantalla
+🛠️ Tecnologías
 
----
+Flutter - Framework UI.
 
-### 1. La forma estándar (Markdown)
-Es la más rápida. Solo pega esto en una línea vacía:
-`![Texto Alternativo](URL_DE_LA_IMAGEN)`
+Just Audio - Motor de audio.
 
-**Ejemplo real para tu PZ Player:**
-```markdown
-![Pantalla Principal](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)
-```
+Provider - Gestión de estado.
 
-### 2. La forma profesional (HTML)
-Esta es la que yo te recomendé porque permite **centrar** y **cambiar el tamaño** (si no, la imagen sale gigante).
-```html
-
-
-<p align="center">
-  <img src="[https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png](https://raw.githubusercontent.com/andreslondono11/pzplayer2026/main/assets/screenshots/1.png)" width="300">
-</p>
-```
-
-### 3. Usando rutas relativas (La más limpia)
-Si la imagen está en el mismo proyecto, no necesitas la URL larga de internet. GitHub es inteligente y la busca solo:
-```markdown
-![Principal](assets/screenshots/1.png)
+Google Generative AI - Inteligencia Artificial.
