@@ -138,7 +138,9 @@ class AlbumScreen extends StatelessWidget {
                       ),
                       Text(
                         "${currentSongs.length} canciones",
-                        style: AppTextStyles.captionDark,
+                        style: isDark
+                            ? AppTextStyles.captionDark
+                            : AppTextStyles.captionLight,
                       ),
                     ],
                   ),

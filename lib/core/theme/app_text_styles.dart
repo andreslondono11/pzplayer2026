@@ -6,13 +6,13 @@ class AppTextStyles {
   static const TextStyle headingLight = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
-    color: AppColors.primary,
+    color: AppColors.textPrimary,
   );
 
   static const TextStyle subheadingLight = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    color: AppColors.primary,
+    color: AppColors.textPrimary,
   );
 
   static const TextStyle bodyLight = TextStyle(

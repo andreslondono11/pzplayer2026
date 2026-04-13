@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Para las carátulas
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:pzplayer/ui/widgets/album_detalle.dart';
 import 'package:pzplayer/ui/widgets/artista_detalle.dart'
@@ -9,7 +9,7 @@ import 'package:pzplayer/ui/widgets/artista_detalle.dart'
 import 'package:pzplayer/ui/widgets/genre_detalle.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import 'package:pzplayer/core/theme/app_text_styles.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -21,14 +21,46 @@ class LibraryScreen extends StatefulWidget {
 class _LibraryScreenState extends State<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  String? _currentLetter;
+  String? _currentLetterOverlay;
+  String? _currentScrollLetter;
+
   final ScrollController _scrollController = ScrollController();
 
   // Optimizaciones de datos
   List<MediaItem> _sortedItems = [];
-
-  // 🔑 NUEVO CACHÉ: Guardamos las imágenes por ID para evitar parpadeos al hacer scroll
+  final Map<String, int> _letterIndexMap = {};
   final Map<int, Uint8List?> _artworkCache = {};
+
+  // Lista de letras
+  final List<String> _alphabet = [
+    '#',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  ];
 
   @override
   void initState() {
@@ -37,29 +69,60 @@ class _LibraryScreenState extends State<LibraryScreen>
       duration: const Duration(seconds: 6),
       vsync: this,
     )..repeat();
-    _scrollController.addListener(_updateCurrentLetter);
-  }
 
-  void _updateCurrentLetter() {
-    if (_sortedItems.isEmpty) return;
-    const itemHeight = 72.0;
-    final index = (_scrollController.offset / itemHeight).floor();
-
-    if (index >= 0 && index < _sortedItems.length) {
-      final letter = _sortedItems[index].title.isNotEmpty
-          ? _sortedItems[index].title[0].toUpperCase()
-          : '#';
-      if (_currentLetter != letter) {
-        setState(() => _currentLetter = letter);
-      }
-    }
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_sortedItems.isEmpty) return;
+    if (_currentLetterOverlay != null) return;
+
+    final double itemExtent = 72.0;
+    final int currentIndex = (_scrollController.offset / itemExtent).round();
+
+    if (currentIndex >= 0 && currentIndex < _sortedItems.length) {
+      final item = _sortedItems[currentIndex];
+      String letter = '#';
+
+      // 👇 CORRECCIÓN SEGURA: Verificamos longitud antes de acceder al índice
+      if (item.title.isNotEmpty && item.title.length >= 1) {
+        letter = item.title[0].toUpperCase();
+        if (!RegExp(r'[A-Z]').hasMatch(letter)) {
+          letter = '#';
+        }
+      }
+
+      if (_currentScrollLetter != letter) {
+        setState(() {
+          _currentScrollLetter = letter;
+        });
+      }
+    }
+  }
+
+  void _buildIndexMap() {
+    _letterIndexMap.clear();
+    for (int i = 0; i < _sortedItems.length; i++) {
+      final title = _sortedItems[i].title;
+      // 👇 CORRECCIÓN SEGURA AQUÍ TAMBIÉN
+      if (title.isNotEmpty && title.length >= 1) {
+        String letter = title[0].toUpperCase();
+        if (!RegExp(r'[A-Z]').hasMatch(letter)) {
+          letter = '#';
+        }
+        if (!_letterIndexMap.containsKey(letter)) {
+          _letterIndexMap[letter] = i;
+        }
+      }
+    }
   }
 
   @override
@@ -69,25 +132,39 @@ class _LibraryScreenState extends State<LibraryScreen>
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
+    // 👇 MEJORA INTELIGENTE: Detección de cambios automática
+    bool needsUpdate = false;
+
     if (_sortedItems.length != audio.items.length) {
+      needsUpdate = true;
+    } else if (_sortedItems.isNotEmpty && audio.items.isNotEmpty) {
+      // Verificamos IDs si la longitud es igual (para detectar borrados + descargas)
+      if (_sortedItems.first.id != audio.items.first.id ||
+          _sortedItems.last.id != audio.items.last.id) {
+        needsUpdate = true;
+      }
+    }
+
+    if (needsUpdate) {
       _sortedItems = List<MediaItem>.from(
         audio.items,
       )..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      _buildIndexMap();
     }
 
     if (_sortedItems.isEmpty) return _buildEmptyState(isDark);
 
     return Stack(
       children: [
+        // 👇 ListView simple (Sin RefreshIndicator)
         ListView.builder(
           controller: _scrollController,
           itemCount: _sortedItems.length,
-          itemExtent: 72.0, // Altura fija para optimizar 1000+ items
+          itemExtent: 72.0,
           cacheExtent: 1500,
+          physics: const AlwaysScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             final item = _sortedItems[index];
-
-            // 🔑 Extraemos el ID numérico de los extras
             final dynamic rawId = item.extras?['dbId'];
             final int songId = (rawId is int)
                 ? rawId
@@ -98,19 +175,46 @@ class _LibraryScreenState extends State<LibraryScreen>
               item: item,
               songId: songId,
               isDark: isDark,
-              artworkCache:
-                  _artworkCache, // 👈 Pasamos el caché para evitar parpadeos
+              artworkCache: _artworkCache,
               onTap: () => audio.playItems(_sortedItems, startIndex: index),
               onMenuPressed: () => _showSongMenu(context, item, isLandscape),
             );
           },
         ),
-        if (_currentLetter != null) _buildLetterOverlay(),
+
+        // Barra lateral de navegación
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: 40,
+          child: _AlphabetScrollbar(
+            alphabet: _alphabet,
+            letterIndexMap: _letterIndexMap,
+            currentActiveLetter: _currentScrollLetter,
+            onLetterSelected: (letter) {
+              setState(() => _currentLetterOverlay = letter);
+              if (_letterIndexMap.containsKey(letter)) {
+                _scrollController.animateTo(
+                  _letterIndexMap[letter]! * 72.0,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                );
+              }
+            },
+            onDragEnd: () {
+              setState(() => _currentLetterOverlay = null);
+              _onScroll();
+            },
+          ),
+        ),
+
+        // Overlay
+        if (_currentLetterOverlay != null)
+          _buildLetterOverlay(_currentLetterOverlay!),
       ],
     );
   }
-
-  // --- UI Components Mantenidos ---
 
   Widget _buildEmptyState(bool isDark) {
     return Center(
@@ -132,24 +236,25 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  Widget _buildLetterOverlay() {
-    return Positioned(
-      right: 20,
-      top: MediaQuery.of(context).size.height / 2 - 40,
-      child: IgnorePointer(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildLetterOverlay(String letter) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          letter,
+          style: const TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          child: Text(_currentLetter!, style: AppTextStyles.overlay),
         ),
       ),
     );
   }
-
-  // --- Menús y Navegación Mantenidos ---
 
   void _showSongMenu(BuildContext context, MediaItem song, bool isLandscape) {
     final audio = context.read<AudioProvider>();
@@ -296,14 +401,133 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 }
 
-// --- Celda de alto rendimiento SIN PARPADEO ---
+// --- WIDGETS AUXILIARES ---
+class _AlphabetScrollbar extends StatefulWidget {
+  final List<String> alphabet;
+  final Map<String, int> letterIndexMap;
+  final String? currentActiveLetter;
+  final Function(String) onLetterSelected;
+  final VoidCallback onDragEnd;
+
+  const _AlphabetScrollbar({
+    required this.alphabet,
+    required this.letterIndexMap,
+    required this.currentActiveLetter,
+    required this.onLetterSelected,
+    required this.onDragEnd,
+  });
+
+  @override
+  State<_AlphabetScrollbar> createState() => _AlphabetScrollbarState();
+}
+
+class _AlphabetScrollbarState extends State<_AlphabetScrollbar> {
+  String? _lastSelectedLetter;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // 1. Detectamos la orientación
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    return GestureDetector(
+      onVerticalDragStart: (details) =>
+          _handleDrag(context, details.globalPosition),
+      onVerticalDragUpdate: (details) =>
+          _handleDrag(context, details.globalPosition),
+      onVerticalDragEnd: (_) => widget.onDragEnd(),
+      child: Container(
+        color: Colors.transparent,
+        alignment: Alignment.centerRight,
+        // 2. En landscape reducimos el padding para ganar espacio
+        padding: EdgeInsets.only(
+          right: 10,
+          top: isLandscape ? 2 : 10,
+          bottom: isLandscape ? 2 : 10,
+        ),
+        // ✅ Ajuste para evitar el crash: Limitamos la altura máxima en Landscape
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height * (isLandscape ? 0.85 : 1.0),
+          ),
+          child: Column(
+            // 3. En Portrait se mantiene igual (spaceBetween), en Landscape las centramos
+            mainAxisAlignment: isLandscape
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: widget.alphabet.map((letter) {
+              bool hasItems = widget.letterIndexMap.containsKey(letter);
+              bool isActive =
+                  _lastSelectedLetter == letter ||
+                  widget.currentActiveLetter == letter;
+
+              // ✅ Flexible permite que cada letra ceda espacio y no rompa el layout
+              return Flexible(
+                child: Container(
+                  // 4. Reducimos el padding vertical en landscape para que quepan todas
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: isLandscape ? 0.2 : 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? (isDark ? Colors.white24 : Colors.black12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    letter,
+                    style: TextStyle(
+                      // 5. Letra un poco más pequeña en landscape para evitar el choque
+                      fontSize: isLandscape ? 8.5 : 11,
+                      height: 1.0, // Mantiene el texto compacto
+                      fontWeight: FontWeight.bold,
+                      color: hasItems
+                          ? (isActive
+                                ? (isDark ? Colors.white : Colors.black)
+                                : (isDark ? Colors.white70 : Colors.black87))
+                          : (isDark ? Colors.white12 : Colors.black12),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleDrag(BuildContext context, Offset globalPosition) {
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final localPosition = box.globalToLocal(globalPosition);
+
+    // El cálculo se mantiene igual porque box.size.height ya toma
+    // en cuenta el tamaño reducido por el ConstrainedBox
+    final double itemHeight = box.size.height / widget.alphabet.length;
+    int index = (localPosition.dy / itemHeight).floor();
+
+    if (index >= 0 && index < widget.alphabet.length) {
+      final selectedLetter = widget.alphabet[index];
+      if (_lastSelectedLetter != selectedLetter) {
+        setState(() => _lastSelectedLetter = selectedLetter);
+        widget.onLetterSelected(selectedLetter);
+      }
+    }
+  }
+}
+
 class _SongListTile extends StatelessWidget {
   final MediaItem item;
   final int songId;
   final bool isDark;
   final VoidCallback onTap;
   final VoidCallback onMenuPressed;
-  final Map<int, Uint8List?> artworkCache; // 👈 Referencia al caché del padre
+  final Map<int, Uint8List?> artworkCache;
 
   const _SongListTile({
     super.key,
@@ -317,12 +541,10 @@ class _SongListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Si ya está en el caché, la dibujamos de inmediato (SIN PARPADEO)
     if (artworkCache.containsKey(songId)) {
       return _buildTile(artworkCache[songId]);
     }
 
-    // 2. Si no, usamos FutureBuilder pero guardamos el resultado
     return FutureBuilder<Uint8List?>(
       future: songId == 0
           ? Future.value(null)
@@ -330,14 +552,13 @@ class _SongListTile extends StatelessWidget {
               songId,
               ArtworkType.AUDIO,
               format: ArtworkFormat.JPEG,
-              size: 150, // Pequeño para que el caché no use mucha RAM
+              size: 150,
             ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          artworkCache[songId] = snapshot.data; // Guardamos para la próxima
+          artworkCache[songId] = snapshot.data;
           return _buildTile(snapshot.data);
         }
-        // Mientras carga, mostramos el estado vacío pero sin animaciones que distraigan
         return _buildTile(null);
       },
     );

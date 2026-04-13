@@ -1,0 +1,2 @@
+C:/Users/PzStudio/StudioProjects/pzplayer1/android/app/.cxx/debug/6l613f1h/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/PzStudio/StudioProjects/pzplayer1/android/app/.cxx/debug/6l613f1h/armeabi-v7a/CMakeFiles/rebuild_cache.dir

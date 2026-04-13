@@ -218,12 +218,13 @@ class FolderScreen extends StatelessWidget {
       ),
       title: Text(
         currentFolderName,
-        style: isDark ? AppTextStyles.darktof : AppTextStyles.darktoif,
+        style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
+
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         "${currentSongs.length} canciones",
-        style: isDark ? AppTextStyles.darktoi : AppTextStyles.darktoa,
+        style: isDark ? AppTextStyles.captionDark : AppTextStyles.captionLight,
       ),
       onTap: () {
         Navigator.push(

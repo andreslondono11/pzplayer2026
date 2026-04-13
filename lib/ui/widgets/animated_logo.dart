@@ -48,7 +48,7 @@ class _AnimatedLogoState extends State<AnimatedLogo>
         ),
         const SizedBox(height: 16),
         Text(
-          "Music Player",
+          "PZ Player",
           style: Theme.of(
             context,
           ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),

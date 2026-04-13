@@ -247,8 +247,8 @@ class GenreScreen extends StatelessWidget {
                   child: Text(
                     currentGenreName,
                     style: isDark
-                        ? AppTextStyles.darktof
-                        : AppTextStyles.darktoif,
+                        ? AppTextStyles.bodyDark
+                        : AppTextStyles.bodyLight,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -261,8 +261,8 @@ class GenreScreen extends StatelessWidget {
                   child: Text(
                     "${currentSongs.length} canciones",
                     style: isDark
-                        ? AppTextStyles.darktoi
-                        : AppTextStyles.darktoa,
+                        ? AppTextStyles.captionDark
+                        : AppTextStyles.captionLight,
                   ),
                 ),
               ],

@@ -237,8 +237,8 @@ class ArtistScreen extends StatelessWidget {
                   child: Text(
                     currentArtistName,
                     style: isDark
-                        ? AppTextStyles.darktof
-                        : AppTextStyles.darktoif,
+                        ? AppTextStyles.bodyDark
+                        : AppTextStyles.bodyLight,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -251,8 +251,8 @@ class ArtistScreen extends StatelessWidget {
                   child: Text(
                     "${currentSongs.length} canciones",
                     style: isDark
-                        ? AppTextStyles.darktoi
-                        : AppTextStyles.darktoa,
+                        ? AppTextStyles.captionDark
+                        : AppTextStyles.captionLight,
                   ),
                 ),
               ],

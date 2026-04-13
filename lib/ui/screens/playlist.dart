@@ -282,14 +282,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   title: Text(
                     playlistName,
                     style: isDark
-                        ? AppTextStyles.subheadingDark
-                        : AppTextStyles.subheadingLight,
+                        ? AppTextStyles.bodyDark
+                        : AppTextStyles.bodyLight,
                   ),
                   subtitle: Text(
                     "${songs.length} canciones",
                     style: isDark
-                        ? AppTextStyles.darktoi
-                        : AppTextStyles.darktoa,
+                        ? AppTextStyles.captionDark
+                        : AppTextStyles.captionLight,
                   ),
                   trailing: IconButton(
                     icon: Icon(

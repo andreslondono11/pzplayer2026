@@ -202,7 +202,8 @@ class AlbumDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          albumName,
+          // albumName,
+          'Detalles del Album',
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,

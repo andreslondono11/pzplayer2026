@@ -212,6 +212,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
 import 'package:on_audio_query/on_audio_query.dart'; // Asegúrate de tener esta dependencia
 import 'package:pzplayer/ui/widgets/artista_detalle.dart';
+import 'package:pzplayer/ui/widgets/player_controls.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -433,7 +434,8 @@ class PlaylistDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          playlistName,
+          // playlistName,
+          'Detalles del Playlist',
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,
@@ -563,6 +565,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                MiniPlayer(),
               ],
             ),
     );

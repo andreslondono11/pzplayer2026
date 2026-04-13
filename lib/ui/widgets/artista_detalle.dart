@@ -535,7 +535,8 @@ class ArtistDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          artistName,
+          // artistName,
+          'Album del Artista',
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,

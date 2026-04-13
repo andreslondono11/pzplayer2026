@@ -1,874 +1,122 @@
-import 'dart:math';
-import 'dart:ui';
-import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:provider/provider.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:audio_service/audio_service.dart';
-import 'package:pzplayer/core/audio/audio_provider.dart';
-import 'package:pzplayer/core/theme/app_colors.dart';
-import 'package:pzplayer/core/theme/app_text_styles.dart';
-import 'package:pzplayer/ui/widgets/progess.dart';
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" package="com.pzplayer.co.pzplayer">
 
-class PlayerScreen extends StatefulWidget {
-  const PlayerScreen({super.key});
 
-  @override
-  State<PlayerScreen> createState() => _PlayerScreenState();
+  <!-- ✅ Permisos -->
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+      tools:ignore="ScopedStorage" />
+
+  <application
+      android:name="${applicationName}"
+      android:label="PZ Player"
+      android:icon="@mipmap/ic_launcher"
+      android:requestLegacyExternalStorage="true">
+
+    <!-- ✅ Ícono de notificación -->
+    <meta-data
+        android:name="com.google.android.foreground_service.notification_icon"
+        android:resource="@drawable/ic_notification" />
+
+    <!-- ✅ Tema de Flutter -->
+    <meta-data
+        android:name="io.flutter.embedding.android.NormalTheme"
+        android:resource="@style/NormalTheme" />
+
+    <!-- ✅ Flutter embedding -->
+    <meta-data
+        android:name="flutterEmbedding"
+        android:value="2" />
+
+    <!-- ✅ Actividad principal -->
+    <activity
+        android:name="com.ryanheise.audioservice.AudioServiceActivity"
+        android:exported="true"
+        android:launchMode="singleTop"
+        android:taskAffinity=""
+        android:theme="@style/LaunchTheme"
+        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+        android:hardwareAccelerated="true"
+        android:windowSoftInputMode="adjustResize">
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="content" />
+        <data android:scheme="file" />
+        <data android:mimeType="audio/*" />
+      </intent-filter>
+    </activity>
+
+    <!-- ✅ Servicio de audio -->
+    <service
+        android:name="com.ryanheise.audioservice.AudioService"
+        android:foregroundServiceType="mediaPlayback"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.media.browse.MediaBrowserService" />
+      </intent-filter>
+    </service>
+
+    <!-- ✅ Receptor de botones multimedia -->
+    <receiver
+        android:name="com.ryanheise.audioservice.MediaButtonReceiver"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MEDIA_BUTTON" />
+      </intent-filter>
+    </receiver>
+
+   
+
+  </application>
+
+  <!-- ✅ Soporte para compartir texto -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.PROCESS_TEXT" />
+      <data android:mimeType="text/plain" />
+    </intent>
+  </queries>
+</manifest>
+
+
+
+
+    <receiver android:name=".widget.PlayerWidget" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/player_widget_info" />
+    </receiver>
+
+
+
+
+package com.pzplayer.co.pzplayer.widget
+
+import es.antonborri.home_widget.HomeWidgetProvider
+
+class PlayerWidgetReceiver : HomeWidgetProvider() {
+    // Esta clase puede quedar vacía o puedes usarla para lógica específica.
+    // Al heredar de HomeWidgetProvider, ya es compatible con el plugin.
 }
 
-class _PlayerScreenState extends State<PlayerScreen>
-    with SingleTickerProviderStateMixin {
-  final FlutterTts _tts = FlutterTts();
-  late AnimationController _rotationController;
 
-  @override
-  void initState() {
-    super.initState();
-    _tts.setLanguage("es-ES");
-    _tts.setPitch(1.0);
-    _tts.setSpeechRate(0.9);
-
-    _rotationController = AnimationController(
-      duration: const Duration(seconds: 15),
-      vsync: this,
-    );
-  }
-
-  @override
-  void dispose() {
-    _tts.stop();
-    _rotationController.dispose();
-    super.dispose();
-  }
-
-  String _randomAdvice(String songTitle, String? artist) {
-    final frases = [
-      "La canción $songTitle de $artist es ideal para levantar el ánimo.",
-      "Ponle volumen a $songTitle, te dará energía.",
-      "Relájate con $songTitle, es perfecta para la noche.",
-      "Que el beat de $songTitle sea el motor de tu día.",
-      "PZ Player presenta: $songTitle, el sonido que define tu camino.",
-    ];
-    final random = Random();
-    return frases[random.nextInt(frases.length)];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
-    final current = audio.current;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final orientation = MediaQuery.of(context).orientation;
-
-    if (audio.isPlaying) {
-      _rotationController.repeat();
-    } else {
-      _rotationController.stop();
-    }
-
-    if (current == null)
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
-    // Extraemos la carátula para la UI y para la notificación
-    final coverBytes = audio.normalizeCover(current.extras?['coverBytes']);
-
-    return Scaffold(
-      body: Stack(
-        children: [
-          // 1. FONDO DINÁMICO
-          _buildDynamicBackground(coverBytes, isDark),
-
-          // 2. INTERFAZ PRINCIPAL
-          SafeArea(
-            child: Column(
-              children: [
-                _buildCloseButton(context, isDark),
-                Expanded(
-                  child: orientation == Orientation.portrait
-                      ? _buildPortrait(
-                          context,
-                          audio,
-                          current,
-                          coverBytes,
-                          isDark,
-                        )
-                      : _buildLandscape(
-                          context,
-                          audio,
-                          current,
-                          coverBytes,
-                          isDark,
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: _buildGlassFab(current, isDark),
-    );
-  }
-
-  Widget _buildDynamicBackground(dynamic coverBytes, bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: coverBytes == null
-            ? LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [Colors.grey.shade900, Colors.black]
-                    : [Colors.white, Colors.grey.shade300],
-              )
-            : null,
-        image: coverBytes != null
-            ? DecorationImage(image: MemoryImage(coverBytes), fit: BoxFit.cover)
-            : null,
-      ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-        child: Container(
-          color: isDark
-              ? Colors.black.withOpacity(0.2)
-              : Colors.white.withOpacity(0.1),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPortrait(
-    BuildContext context,
-    AudioProvider audio,
-    MediaItem current,
-    dynamic coverBytes,
-    bool isDark,
-  ) {
-    return Column(
-      children: [
-        Text(
-          'Desliza para cambiar',
-          style: TextStyle(
-            color: isDark ? Colors.white54 : Colors.black54,
-            fontSize: 12,
-          ),
-        ),
-        const Spacer(),
-        _buildCover(audio, current, coverBytes, 300),
-        const Spacer(),
-        _buildMetadata(current, isDark),
-        const SizedBox(height: 20),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25),
-          child: ProgressBarWidget(),
-        ),
-        const SizedBox(height: 10),
-        _buildFullControls(audio, isDark),
-        const SizedBox(height: 40),
-      ],
-    );
-  }
-
-  Widget _buildLandscape(
-    BuildContext context,
-    AudioProvider audio,
-    MediaItem current,
-    dynamic coverBytes,
-    bool isDark,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 4,
-          child: Center(child: _buildCover(audio, current, coverBytes, 260)),
-        ),
-        Expanded(
-          flex: 5,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildMetadata(current, isDark),
-              const SizedBox(height: 15),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: ProgressBarWidget(),
-              ),
-              _buildFullControls(audio, isDark),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCloseButton(BuildContext context, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.only(top: 5),
-      child: IconButton(
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          size: 50,
-          color: isDark ? Colors.white70 : Colors.black87,
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-    );
-  }
-
-  Widget _buildCover(
-    AudioProvider audio,
-    MediaItem current,
-    dynamic coverBytes,
-    double size,
-  ) {
-    return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity != null) {
-          if (details.primaryVelocity! < 0)
-            audio.skipNext();
-          else if (details.primaryVelocity! > 0)
-            audio.skipPrevious();
-        }
-      },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 25,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-          ),
-          RotationTransition(
-            turns: _rotationController,
-            child: Container(
-              width: size,
-              height: size,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.black45,
-                    Colors.black,
-                    Colors.black87,
-                    Colors.black,
-                  ],
-                  stops: [0.0, 0.4, 0.7, 1.0],
-                ),
-              ),
-              child: CustomPaint(painter: VinylLinesPainter()),
-            ),
-          ),
-          RotationTransition(
-            turns: _rotationController,
-            child: ClipOval(
-              child: coverBytes != null
-                  ? Image.memory(
-                      coverBytes,
-                      width: size * 0.44,
-                      height: size * 0.44,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: size * 0.44,
-                      height: size * 0.44,
-                      color: Colors.grey.shade900,
-                      child: const Icon(
-                        Icons.music_note,
-                        color: Colors.white24,
-                        size: 50,
-                      ),
-                    ),
-            ),
-          ),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Colors.white70,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetadata(MediaItem current, bool isDark) {
-    final textColor = isDark ? Colors.white : Colors.black87;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Text(
-            current.title,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          current.artist ?? 'Desconocido',
-          style: TextStyle(
-            color: isDark ? Colors.white60 : Colors.black54,
-            fontSize: 16,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFullControls(AudioProvider audio, bool isDark) {
-    final iconColor = isDark ? Colors.white : Colors.black87;
-    final containerColor = isDark
-        ? Colors.white.withOpacity(0.08)
-        : Colors.black.withOpacity(0.04);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: containerColor,
-        borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.skip_previous_rounded,
-                  size: 45,
-                  color: iconColor,
-                ),
-                onPressed: audio.skipPrevious,
-              ),
-              GestureDetector(
-                onTap: () => audio.isPlaying ? audio.pause() : audio.resume(),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: iconColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    audio.isPlaying
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    size: 45,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.skip_next_rounded, size: 45, color: iconColor),
-                onPressed: audio.skipNext,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const PlaylistButton(),
-              const SizedBox(width: 25),
-              IconButton(
-                icon: Icon(
-                  audio.shuffleEnabled
-                      ? Icons.shuffle_on_rounded
-                      : Icons.shuffle_rounded,
-                  size: 30,
-                  color: audio.shuffleEnabled
-                      ? Colors.blueAccent
-                      : (isDark ? Colors.white70 : Colors.black54),
-                ),
-                onPressed: () => audio.toggleShuffle(),
-              ),
-              const SizedBox(width: 25),
-              IconButton(
-                icon: Icon(
-                  () {
-                    switch (audio.loopMode) {
-                      case LoopMode.off:
-                        return Icons.repeat_rounded;
-                      case LoopMode.all:
-                        return Icons.repeat_on_rounded;
-                      case LoopMode.one:
-                        return Icons.repeat_one_rounded;
-                    }
-                  }(),
-                  size: 30,
-                  color: audio.loopMode != LoopMode.off
-                      ? Colors.blueAccent
-                      : (isDark ? Colors.white70 : Colors.black54),
-                ),
-                onPressed: () => audio.toggleLoopMode(),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGlassFab(MediaItem current, bool isDark) {
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final containerColor = isDark
-        ? Colors.white.withOpacity(0.1)
-        : Colors.black.withOpacity(0.05);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: InkWell(
-          onTap: () async {
-            final advice = _randomAdvice(current.title, current.artist);
-            await _tts.speak(advice);
-            if (!mounted) return;
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: isDark ? Colors.black87 : Colors.white,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-              ),
-              builder: (_) => Container(
-                padding: const EdgeInsets.all(30),
-                child: Text(
-                  advice,
-                  style: TextStyle(color: textColor, fontSize: 18),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: containerColor,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isDark ? Colors.white24 : Colors.black12,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.deepPurpleAccent,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "IA",
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class VinylLinesPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.07)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-    final center = Offset(size.width / 2, size.height / 2);
-    for (var i = 1; i < 15; i++) {
-      canvas.drawCircle(center, (size.width / 2) * (i / 15), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class PlaylistButton extends StatelessWidget {
-  const PlaylistButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return IconButton(
-      icon: Icon(
-        Icons.queue_music,
-        size: 32,
-        color: Theme.of(context).brightness == Brightness.light
-            ? AppColors.secondary
-            : Colors.blueGrey,
-      ),
-      onPressed: () {
-        final audio = context.read<AudioProvider>();
-        final queue = audio.queue;
-
-        if (queue.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "La cola está vacía",
-                style: Theme.of(context).brightness == Brightness.light
-                    ? AppTextStyles.captionLight
-                    : AppTextStyles.captionDark,
-              ),
-            ),
-          );
-          return;
-        }
-
-        showModalBottomSheet(
-          context: context,
-          builder: (_) => SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    "Cola actual (${queue.length} canciones)",
-                    style: Theme.of(context).brightness == Brightness.light
-                        ? AppTextStyles.subheadingLight
-                        : AppTextStyles.subheadingDark,
-                  ),
-                ),
-                const Divider(),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: queue.length,
-                    itemBuilder: (context, index) {
-                      final song = queue[index];
-                      final coverBytes = audio.normalizeCover(
-                        song.extras?['coverBytes'],
-                      );
-
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isDark
-                              ? Colors.blueGrey
-                              : AppColors.primary,
-                          backgroundImage: coverBytes != null
-                              ? MemoryImage(coverBytes)
-                              : null,
-                          child: coverBytes == null
-                              ? const Icon(
-                                  Icons.music_note,
-                                  color: Colors.white,
-                                )
-                              : null,
-                        ),
-                        title: Text(
-                          song.title,
-                          style:
-                              Theme.of(context).brightness == Brightness.light
-                              ? AppTextStyles.bodyLight
-                              : AppTextStyles.bodyDark,
-                        ),
-                        subtitle: Text(
-                          song.artist ?? 'Desconocido',
-                          style:
-                              Theme.of(context).brightness == Brightness.light
-                              ? AppTextStyles.captionLight
-                              : AppTextStyles.captionDark,
-                        ),
-                        onTap: () => audio.playItems(queue, startIndex: index),
-                        trailing: IconButton(
-                          icon: Icon(
-                            Icons.more_vert,
-                            color:
-                                Theme.of(context).brightness == Brightness.light
-                                ? AppColors.textSecondary
-                                : AppColors.white,
-                          ),
-                          onPressed: () => _showSongMenu(context, song),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showSongMenu(BuildContext context, MediaItem song) {
-    final audio = context.read<AudioProvider>();
-
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.play_arrow),
-              title: Text(
-                "Reproducir ahora",
-                style: Theme.of(context).brightness == Brightness.light
-                    ? AppTextStyles.bodyLight
-                    : AppTextStyles.bodyDark,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                audio.playItems([song]);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.queue_play_next),
-              title: Text(
-                "Reproducir siguiente",
-                style: Theme.of(context).brightness == Brightness.light
-                    ? AppTextStyles.bodyLight
-                    : AppTextStyles.bodyDark,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                final queue = List<MediaItem>.from(audio.queue);
-                final currentIndex = queue.indexOf(audio.current ?? song);
-                queue.insert(currentIndex + 1, song);
-                audio.playItems(queue, startIndex: currentIndex);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.queue_music),
-              title: Text(
-                "Añadir a la cola",
-                style: Theme.of(context).brightness == Brightness.light
-                    ? AppTextStyles.bodyLight
-                    : AppTextStyles.bodyDark,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                final queue = List<MediaItem>.from(audio.queue);
-                queue.add(song);
-                audio.playItems(
-                  queue,
-                  startIndex: queue.indexOf(audio.current!),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-  "Con $songTitle, cada día se siente mejor.",
-      "Pzplatinum te dice gracias por estar aquí y no olvides compartir esta aplicación",
-      "Este artista $artist es de los mejores en su carrera.",
-
-      "La canción $songTitle de $artist es ideal para levantar el ánimo.",
-      "Ponle volumen a $songTitle, te dará energía.",
-      "Relájate con $songTitle, es perfecta para la noche.",
-      "Que el beat de $songTitle sea el motor de tu día.",
-
-      "Music Player presenta: $songTitle, el sonido que define tu camino.",
-
-      "Escucha $songTitle de $artist, un viaje sonoro único.",
-
-      "Deja que $songTitle te acompañe en tu momento de inspiración.",
-
-      "Con $songTitle, cada paso se siente más ligero.",
-
-      "El ritmo de $songTitle es la chispa que necesitas.",
-
-      "Nada mejor que $songTitle para empezar la mañana.",
-
-      "Sumérgete en $songTitle y olvida las preocupaciones.",
-
-      "El estilo de $artist en $songTitle es pura magia.",
-
-      "Haz que tu día brille con $songTitle.",
-
-      "Cuando suena $songTitle, todo se transforma.",
-
-      "La melodía de $songTitle es un abrazo sonoro.",
-
-      "Déjate llevar por la energía de $songTitle.",
-
-      "El flow de $songTitle te impulsa hacia adelante.",
-
-      "Con $songTitle, cada momento se vuelve especial.",
-
-      "El arte de $artist en $songTitle es inolvidable.",
-
-      "Escuchar $songTitle es como viajar sin moverte.",
-
-      "El ritmo de $songTitle te conecta con tu esencia.",
-
-      "Nada como $songTitle para recargar energías.",
-
-      "La vibra de $songTitle ilumina cualquier espacio.",
-
-      "Haz de $songTitle tu soundtrack personal.",
-
-      "El poder de $songTitle está en su sencillez.",
-
-      "Con $songTitle, la rutina se vuelve aventura.",
-
-      "El toque de $artist en $songTitle es único.",
-
-      "Cada nota de $songTitle es un recordatorio de alegría.",
-
-      "El beat de $songTitle es pura motivación.",
-
-      "Haz que $songTitle sea tu himno del día.",
-
-      "La fuerza de $songTitle te acompaña siempre.",
-
-      "El sonido de $songTitle es pura libertad.",
-
-      "Con $songTitle, todo parece posible.",
-
-      "El estilo de $songTitle es perfecto para relajarte.",
-
-      "Haz que $songTitle sea tu refugio musical.",
-
-      "El ritmo de $songTitle te invita a bailar.",
-
-      "Nada como $songTitle para cerrar el día.",
-
-      "El arte de $artist brilla en $songTitle.",
-
-      "Cada acorde de $songTitle es un regalo.",
-
-      "Haz que $songTitle sea tu momento zen.",
-
-      "El beat de $songTitle te llena de energía positiva.",
-
-      "Con $songTitle, la noche se vuelve mágica.",
-
-      "El poder de $songTitle está en su vibra.",
-
-      "Haz que $songTitle sea tu impulso creativo.",
-
-      "El ritmo de $songTitle es pura adrenalina.",
-
-      "Nada como $songTitle para inspirarte.",
-
-      "El estilo de $songTitle es perfecto para soñar.",
-
-      "Haz que $songTitle sea tu pausa musical.",
-
-      "El sonido de $songTitle es un viaje interior.",
-
-      "Con $songTitle, cada instante se disfruta más.",
-
-      "El beat de $songTitle es tu mejor compañía.",
-
-      "Haz que $songTitle sea tu energía diaria.",
-
-      "El arte de $artist se siente en cada nota de $songTitle.",
-
-      "Nada como $songTitle para acompañar tu camino.",
-
-      "El ritmo de $songTitle es pura motivación.",
-
-      "Haz que $songTitle sea tu inspiración constante.",
-
-      "El poder de $songTitle está en su esencia.",
-
-      "Con $songTitle, todo fluye mejor.",
-
-      "El estilo de $songTitle es perfecto para meditar.",
-
-      "Haz que $songTitle sea tu momento de calma.",
-
-      "El beat de $songTitle te conecta con la vida.",
-
-      "Nada como $songTitle para empezar con fuerza.",
-
-      "El sonido de $songTitle es pura emoción.",
-
-      "Haz que $songTitle sea tu chispa creativa.",
-
-      "El ritmo de $songTitle te invita a moverte.",
-
-      "Con $songTitle, cada día es especial.",
-
-      "El arte de $artist transforma $songTitle en magia.",
-
-      "Haz que $songTitle sea tu refugio sonoro.",
-
-      "El beat de $songTitle es tu motor interno.",
-
-      "Nada como $songTitle para relajarte al final del día.",
-
-      "El estilo de $songTitle es pura elegancia.",
-
-      "Haz que $songTitle sea tu energía nocturna.",
-
-      "El poder de $songTitle está en su ritmo.",
-
-      "Con $songTitle, todo se siente más ligero.",
-
-      "El sonido de $songTitle es pura inspiración.",
-
-      "Haz que $songTitle sea tu canción del momento.",
-
-      "El beat de $songTitle te impulsa hacia adelante.",
-
-      "Nada como $songTitle para acompañar tu viaje.",
-
-      "El arte de $artist en $songTitle es inolvidable.",
-
-      "Haz que $songTitle sea tu mantra musical.",
-
-      "El ritmo de $songTitle es pura alegría.",
-
-      "Con $songTitle, cada instante vibra más.",
-
-      "El estilo de $songTitle es perfecto para motivarte.",
-
-      "Haz que $songTitle sea tu pausa energética.",
-
-      "El sonido de $songTitle es pura calma.",
-
-      "Nada como $songTitle para encender tu día.",
-
-      "El beat de $songTitle es tu mejor aliado.",
-
-      "Haz que $songTitle sea tu soundtrack personal.",
-
-      "El poder de $songTitle está en su melodía.",
-
-      "Con $songTitle, todo se vuelve más brillante.",
-
-      "El arte de $artist se refleja en $songTitle.",
-
-      "Haz que $songTitle sea tu impulso diario.",
-
-      "El ritmo de $songTitle es pura pasión.",
-
-      "Nada como $songTitle para inspirar tu creatividad.",
-
-      "El estilo de $songTitle es perfecto para disfrutar.",
-
-      "Haz que $songTitle sea tu momento de paz.",
-
-      "El sonido de $songTitle es pura energía.",
+"com.ryanheise.audioservice.AudioServiceActivity"

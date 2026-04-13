@@ -575,7 +575,8 @@ class FolderDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          folderDisplayName,
+          // folderDisplayName,
+          'Detalles de la Carpeta',
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,

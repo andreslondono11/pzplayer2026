@@ -501,7 +501,8 @@ class GenreDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          genreName,
+          // genreName,
+          'Detalles de la Genero',
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,
