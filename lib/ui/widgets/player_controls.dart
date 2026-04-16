@@ -308,8 +308,8 @@ class MiniPlayer extends StatelessWidget {
 
       margin: isLandscape
           ? const EdgeInsets.only(
-              left: 00,
-              right: 00,
+              left: 50,
+              right: 50,
               bottom: 10,
               top: 10,
             ) // Pegado a la derecha
@@ -450,6 +450,10 @@ class MiniPlayer extends StatelessWidget {
   }
 
   Widget _buildPlayButton(AudioProvider audio, bool isDark) {
+    // Necesitamos la canción actual. Asumimos que 'audio.current' tiene la canción
+    // Si tu botón está en un detalle de canción, pasa la canción como argumento.
+    final currentSong = audio.current;
+
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -464,7 +468,18 @@ class MiniPlayer extends StatelessWidget {
           size: 32,
           color: isDark ? Colors.white : AppColors.primary,
         ),
-        onPressed: () => audio.isPlaying ? audio.pause() : audio.resume(),
+        onPressed: () async {
+          // ✅ REGISTRAMOS LA REPRODUCCIÓN ANTES DE PAUSAR/REPRODUCIR
+          if (currentSong != null) {
+            await audio.registrarReproduccionUniversal(currentSong);
+          }
+
+          if (audio.isPlaying) {
+            audio.pause();
+          } else {
+            audio.resume();
+          }
+        },
       ),
     );
   }

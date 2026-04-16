@@ -1,7 +1,7 @@
 // import 'dart:typed_data';
 // import 'package:audio_service/audio_service.dart';
 // import 'package:flutter/material.dart';
-// import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Para carátulas eficientes
+// import 'package:on_audio_query/on_audio_query.dart';
 // import 'package:provider/provider.dart';
 // import 'package:pzplayer/ui/widgets/playlist_detalle.dart';
 // import '../../core/audio/audio_provider.dart';
@@ -9,10 +9,14 @@
 // import '../../core/theme/app_text_styles.dart';
 
 // class PlaylistScreen extends StatefulWidget {
+//   // 🔑 Mantenemos los parámetros intactos
+//   final String playlistName;
+//   final List<MediaItem> songs;
+
 //   const PlaylistScreen({
 //     super.key,
-//     required String playlistName,
-//     required List<MediaItem> songs,
+//     required this.playlistName,
+//     required this.songs,
 //   });
 
 //   @override
@@ -20,7 +24,6 @@
 // }
 
 // class _PlaylistScreenState extends State<PlaylistScreen> {
-//   // 🔑 Caché para evitar parpadeos en las miniaturas de las playlists
 //   final Map<int, Uint8List?> _playlistArtCache = {};
 
 //   @override
@@ -61,7 +64,6 @@
 //                 final playlistName = playlists.keys.elementAt(index);
 //                 final songs = playlists.values.elementAt(index);
 
-//                 // 🔑 Obtenemos el ID de la primera canción para la carátula de la lista
 //                 final firstSong = songs.isNotEmpty ? songs.first : null;
 //                 final dynamic rawId = firstSong?.extras?['dbId'];
 //                 final int songId = (rawId is int)
@@ -73,14 +75,14 @@
 //                   title: Text(
 //                     playlistName,
 //                     style: isDark
-//                         ? AppTextStyles.subheadingDark
-//                         : AppTextStyles.subheadingLight,
+//                         ? AppTextStyles.bodyDark
+//                         : AppTextStyles.bodyLight,
 //                   ),
 //                   subtitle: Text(
 //                     "${songs.length} canciones",
 //                     style: isDark
-//                         ? AppTextStyles.darktoi
-//                         : AppTextStyles.darktoa,
+//                         ? AppTextStyles.captionDark
+//                         : AppTextStyles.captionLight,
 //                   ),
 //                   trailing: IconButton(
 //                     icon: Icon(
@@ -110,10 +112,8 @@
 //     );
 //   }
 
-//   // --- Widget de carátula con caché para evitar parpadeo ---
 //   Widget _buildPlaylistArt(int songId, bool isDark) {
 //     if (songId == 0) return _defaultIcon(isDark);
-
 //     if (_playlistArtCache.containsKey(songId)) {
 //       return _artContainer(_playlistArtCache[songId], isDark);
 //     }
@@ -154,7 +154,6 @@
 //     );
 //   }
 
-//   // --- Diálogo de creación (Mantenido intacto) ---
 //   Future<void> _showCreatePlaylistDialog(
 //     BuildContext context,
 //     bool isDark,
@@ -171,6 +170,7 @@
 //         ),
 //         content: TextField(
 //           controller: nameController,
+//           autofocus: true,
 //           style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
 //           decoration: InputDecoration(
 //             hintText: "Nombre",
@@ -189,7 +189,7 @@
 //           ),
 //           TextButton(
 //             onPressed: () {
-//               final name = nameController.text;
+//               final name = nameController.text.trim();
 //               if (name.isNotEmpty) {
 //                 context.read<AudioProvider>().createPlaylist(name);
 //                 Navigator.pop(context);
@@ -205,12 +205,17 @@
 //     );
 //   }
 // }
+
 import 'dart:typed_data';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
+import 'package:pzplayer/ui/widgets/favorite.dart';
+import 'package:pzplayer/ui/widgets/most_played.dart';
 import 'package:pzplayer/ui/widgets/playlist_detalle.dart';
+// ✅ Importación de la pantalla de Más Escuchados
+// import 'package:pzplayer/ui/screens/most_played_screen.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -256,73 +261,167 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           ),
         ],
       ),
-      body: playlists.isEmpty
-          ? Center(
-              child: Text(
-                "No hay playlists",
-                style: isDark
-                    ? AppTextStyles.captionDark
-                    : AppTextStyles.captionLight,
+      body: Column(
+        children: [
+          // ✅ ENLACE A "MÁS ESCUCHADOS" (Arriba de la lista)
+          ListTile(
+            leading: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
               ),
-            )
-          : ListView.builder(
-              itemCount: playlists.length,
-              itemBuilder: (context, index) {
-                final playlistName = playlists.keys.elementAt(index);
-                final songs = playlists.values.elementAt(index);
-
-                final firstSong = songs.isNotEmpty ? songs.first : null;
-                final dynamic rawId = firstSong?.extras?['dbId'];
-                final int songId = (rawId is int)
-                    ? rawId
-                    : int.tryParse(rawId?.toString() ?? '0') ?? 0;
-
-                return ListTile(
-                  leading: _buildPlaylistArt(songId, isDark),
-                  title: Text(
-                    playlistName,
-                    style: isDark
-                        ? AppTextStyles.bodyDark
-                        : AppTextStyles.bodyLight,
-                  ),
-                  subtitle: Text(
-                    "${songs.length} canciones",
-                    style: isDark
-                        ? AppTextStyles.captionDark
-                        : AppTextStyles.captionLight,
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      Icons.delete,
-                      color: isDark ? Colors.blueGrey : AppColors.primary,
+              child: const Icon(
+                Icons.trending_up,
+                color: Colors.deepPurple,
+                size: 30,
+              ),
+            ),
+            title: Text(
+              "Más Escuchados",
+              style: isDark
+                  ? AppTextStyles.bodyDark.copyWith(fontWeight: FontWeight.bold)
+                  : AppTextStyles.bodyLight.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    onPressed: () {
-                      context.read<AudioProvider>().deletePlaylist(
-                        playlistName,
+            ),
+            subtitle: Text(
+              "Tus álbumes favoritos",
+              style: isDark
+                  ? AppTextStyles.captionDark
+                  : AppTextStyles.captionLight,
+            ),
+            trailing: Icon(
+              Icons.chevron_right,
+              color: isDark ? Colors.blueGrey : AppColors.primary,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MostPlayedScreen(),
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.favorite,
+                color: Colors.deepPurple,
+                size: 30,
+              ),
+            ),
+            title: Text(
+              "Favoritos",
+              style: isDark
+                  ? AppTextStyles.bodyDark.copyWith(fontWeight: FontWeight.bold)
+                  : AppTextStyles.bodyLight.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+            ),
+            subtitle: Text(
+              "Tus Canciones favoritas",
+              style: isDark
+                  ? AppTextStyles.captionDark
+                  : AppTextStyles.captionLight,
+            ),
+            trailing: Icon(
+              Icons.chevron_right,
+              color: isDark ? Colors.blueGrey : AppColors.primary,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoriteSongsScreen(),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 1),
+
+          // LISTA DE PLAYLISTS EXISTENTES
+          Expanded(
+            child: playlists.isEmpty
+                ? Center(
+                    child: Text(
+                      "No hay playlists",
+                      style: isDark
+                          ? AppTextStyles.captionDark
+                          : AppTextStyles.captionLight,
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: playlists.length,
+                    itemBuilder: (context, index) {
+                      final playlistName = playlists.keys.elementAt(index);
+                      final songs = playlists.values.elementAt(index);
+
+                      final firstSong = songs.isNotEmpty ? songs.first : null;
+                      final dynamic rawId = firstSong?.extras?['dbId'];
+                      final int songId = (rawId is int)
+                          ? rawId
+                          : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+
+                      return ListTile(
+                        leading: _buildPlaylistArt(songId, isDark),
+                        title: Text(
+                          playlistName,
+                          style: isDark
+                              ? AppTextStyles.bodyDark
+                              : AppTextStyles.bodyLight,
+                        ),
+                        subtitle: Text(
+                          "${songs.length} canciones",
+                          style: isDark
+                              ? AppTextStyles.captionDark
+                              : AppTextStyles.captionLight,
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(
+                            Icons.delete,
+                            color: isDark ? Colors.blueGrey : AppColors.primary,
+                          ),
+                          onPressed: () {
+                            context.read<AudioProvider>().deletePlaylist(
+                              playlistName,
+                            );
+                          },
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PlaylistDetailScreen(
+                                playlistName: playlistName,
+                                songs: songs,
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PlaylistDetailScreen(
-                          playlistName: playlistName,
-                          songs: songs,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildPlaylistArt(int songId, bool isDark) {
     if (songId == 0) return _defaultIcon(isDark);
-    if (_playlistArtCache.containsKey(songId))
+    if (_playlistArtCache.containsKey(songId)) {
       return _artContainer(_playlistArtCache[songId], isDark);
+    }
 
     return FutureBuilder<Uint8List?>(
       future: OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO, size: 150),

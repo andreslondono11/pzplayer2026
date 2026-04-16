@@ -1825,6 +1825,14 @@ class _PlayerScreenState extends State<PlayerScreen>
       duration: const Duration(seconds: 15),
       vsync: this,
     );
+
+    // ✅ REGISTRO AL ABRIR PANTALLA
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final audio = context.read<AudioProvider>();
+      if (audio.current != null) {
+        audio.registrarReproduccionUniversal(audio.current!);
+      }
+    });
   }
 
   void _initTts() {
@@ -1851,192 +1859,38 @@ class _PlayerScreenState extends State<PlayerScreen>
       "En cada nota de $songTitle encuentro la certeza de que la resiliencia es la música del alma.",
       "Music Player presenta: $songTitle, el sonido que define tu camino.",
 
-      "Escucha $songTitle de $album, un viaje sonoro único.",
-
-      "Deja que $songTitle te acompañe en tu momento de inspiración.",
-
-      "Con $songTitle, cada paso se siente más ligero.",
-
-      "El ritmo de $songTitle es la chispa que necesitas.",
-
-      "Nada mejor que $songTitle para empezar la mañana.",
-
-      "Sumérgete en $songTitle y olvida las preocupaciones.",
-
-      "El estilo de $album en $songTitle es pura magia.",
-
-      "Haz que tu día brille con $songTitle.",
-
-      "Cuando suena $songTitle, todo se transforma.",
-
-      "La melodía de $songTitle es un abrazo sonoro.",
-
-      "Déjate llevar por la energía de $songTitle.",
-
-      "El flow de $songTitle te impulsa hacia adelante.",
-
-      "Con $songTitle, cada momento se vuelve especial.",
-
-      "El arte de $album en $songTitle es inolvidable.",
-
-      "Escuchar $songTitle es como viajar sin moverte.",
-
-      "El ritmo de $songTitle te conecta con tu esencia.",
-
-      "Nada como $songTitle para recargar energías.",
-
-      "La vibra de $songTitle ilumina cualquier espacio.",
-
-      "Haz de $songTitle tu soundtrack personal.",
-
-      "El poder de $songTitle está en su sencillez.",
-
-      "Con $songTitle, la rutina se vuelve aventura.",
-
-      "El toque de $album en $songTitle es único.",
-
-      "Cada nota de $songTitle es un recordatorio de alegría.",
-
-      "El beat de $songTitle es pura motivación.",
-
-      "Haz que $songTitle sea tu himno del día.",
-
-      "La fuerza de $songTitle te acompaña siempre.",
-
-      "El sonido de $songTitle es pura libertad.",
-
-      "Con $songTitle, todo parece posible.",
-
-      "El estilo de $songTitle es perfecto para relajarte.",
-
-      "Haz que $songTitle sea tu refugio musical.",
-
-      "El ritmo de $songTitle te invita a bailar.",
-
-      "Nada como $songTitle para cerrar el día.",
-
-      "El arte de $album brilla en $songTitle.",
-
-      "Cada acorde de $songTitle es un regalo.",
-
-      "Haz que $songTitle sea tu momento zen.",
-
-      "El beat de $songTitle te llena de energía positiva.",
-
-      "Con $songTitle, la noche se vuelve mágica.",
-
-      "El poder de $songTitle está en su vibra.",
-
-      "Haz que $songTitle sea tu impulso creativo.",
-
-      "El ritmo de $songTitle es pura adrenalina.",
-
-      "Nada como $songTitle para inspirarte.",
-
-      "El estilo de $songTitle es perfecto para soñar.",
-
-      "Haz que $songTitle sea tu pausa musical.",
-
-      "El sonido de $songTitle es un viaje interior.",
-
-      "Con $songTitle, cada instante se disfruta más.",
-
-      "El beat de $songTitle es tu mejor compañía.",
-
-      "Haz que $songTitle sea tu energía diaria.",
-
-      "El arte de $album se siente en cada nota de $songTitle.",
-
-      "Nada como $songTitle para acompañar tu camino.",
-
-      "El ritmo de $songTitle es pura motivación.",
-
-      "Haz que $songTitle sea tu inspiración constante.",
-
-      "El poder de $songTitle está en su esencia.",
-
-      "Con $songTitle, todo fluye mejor.",
-
-      "El estilo de $songTitle es perfecto para meditar.",
-
-      "Haz que $songTitle sea tu momento de calma.",
-
-      "El beat de $songTitle te conecta con la vida.",
-
-      "Nada como $songTitle para empezar con fuerza.",
-
-      "El sonido de $songTitle es pura emoción.",
-
-      "Haz que $songTitle sea tu chispa creativa.",
-
-      "El ritmo de $songTitle te invita a moverte.",
-
-      "Con $songTitle, cada día es especial.",
-
-      "El arte de $album transforma $songTitle en magia.",
-
-      "Haz que $songTitle sea tu refugio sonoro.",
-
-      "El beat de $songTitle es tu motor interno.",
-
-      "Nada como $songTitle para relajarte al final del día.",
-
-      "El estilo de $songTitle es pura elegancia.",
-
-      "Haz que $songTitle sea tu energía nocturna.",
-
-      "El poder de $songTitle está en su ritmo.",
-
-      "Con $songTitle, todo se siente más ligero.",
-
-      "El sonido de $songTitle es pura inspiración.",
-
-      "Haz que $songTitle sea tu canción del momento.",
-
-      "El beat de $songTitle te impulsa hacia adelante.",
-
-      "Nada como $songTitle para acompañar tu viaje.",
-
-      "El arte de $album en $songTitle es inolvidable.",
-
-      "Haz que $songTitle sea tu mantra musical.",
-
-      "El ritmo de $songTitle es pura alegría.",
-
-      "Con $songTitle, cada instante vibra más.",
-
-      "El estilo de $songTitle es perfecto para motivarte.",
-
-      "Haz que $songTitle sea tu pausa energética.",
-
-      "El sonido de $songTitle es pura calma.",
-
-      "Nada como $songTitle para encender tu día.",
-
-      "El beat de $songTitle es tu mejor aliado.",
-
-      "Haz que $songTitle sea tu soundtrack personal.",
-
-      "El poder de $songTitle está en su melodía.",
-
-      "Con $songTitle, todo se vuelve más brillante.",
-
-      "El arte de $album refleja en $songTitle.",
-
-      "Haz que $songTitle sea tu impulso diario.",
-
-      "El ritmo de $songTitle es pura pasión.",
-      "Con $songTitle, cada día se siente mejor.",
-      "Pzplatinum te dice gracias por estar aquí y no olvides compartir esta aplicación",
-      "Este artista $album es de los mejores en su carrera.",
-      "PZPlayer presenta: $songTitle, el sonido que define tu camino.",
-      "Nada como $songTitle para inspirar tu creatividad.",
-
-      "El estilo de $songTitle es perfecto para disfrutar.",
-
-      "Haz que $songTitle sea tu momento de paz.",
-
-      "El sonido de $songTitle es pura energía.",
+      "Escucha la canción $songTitle: un refugio sonoro para sanar el alma.",
+      "La canción $songTitle está aquí para decirte que puedes con todo.",
+      "Deja que la paz de la canción $songTitle calme tu mente hoy.",
+      "Con la canción $songTitle, transforma cada herida en una melodía.",
+      "Respira profundo y permite que la canción $songTitle te guíe.",
+      "La canción $songTitle de $album es el abrazo que tus oídos necesitan.",
+      "No estás solo, la canción $songTitle te acompaña en este camino.",
+      "Haz de la canción $songTitle el motor que encienda tu esperanza.",
+      "Que la canción $songTitle te susurre que hoy vas a lograrlo.",
+      "Encuentra tu luz interior mientras suena la canción $songTitle.",
+      "El ritmo de la canción $songTitle es el latido de tu propia fuerza.",
+      "Si el día es gris, deja que la canción $songTitle le ponga color.",
+      "La canción $songTitle está diseñada para elevar tu espíritu ahora.",
+      "Tu momento de paz comienza con los acordes de la canción $songTitle.",
+      "Eres valioso, y la canción $songTitle es el himno de tu éxito.",
+      "Deja atrás las cargas y fluye con la energía de la canción $songTitle.",
+      "Con la canción $songTitle, el silencio se llena de nuevas metas.",
+      "El arte de $album en la canción $songTitle es medicina para el corazón.",
+      "Escuchar la canción $songTitle es recordar que lo mejor está por venir.",
+      "Siente el poder de la canción $songTitle y recupera tu equilibrio.",
+      "Que la canción $songTitle sea la chispa que ilumine tu oscuridad.",
+      "Cada nota de la canción $songTitle es un regalo para tu bienestar.",
+      "Cierra los ojos, escucha la canción $songTitle y vuelve a empezar.",
+      "PZPlayer te apoya: la canción $songTitle es tu fuerza este día.",
+      "El flow de la canción $songTitle te impulsa hacia tu mejor versión.",
+      "La melodía de la canción $songTitle es un eco de tu propia valentía.",
+      "Haz que la canción $songTitle sea el bálsamo para un día difícil.",
+      "Con la canción $songTitle, cada pequeño paso cuenta y brilla.",
+      "Tu resiliencia suena como la canción $songTitle. Sigue adelante.",
+      "Pzplatinum te agradece: tu historia inspira la canción $songTitle.",
+      "El sentimiento de $album brilla con fuerza en la canción $songTitle.",
+      "PZPlayer presenta la canción $songTitle: el sonido de tu destino.",
     ];
     return frases[Random().nextInt(frases.length)];
   }
@@ -2068,13 +1922,9 @@ class _PlayerScreenState extends State<PlayerScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 🎨 FONDO SIMPLIFICADO Y ELEGANTE
           _buildThemedBackground(isDark),
-
-          // 👆 GESTO DE DESLIZAR PARA CERRAR (Swipe Down)
           GestureDetector(
             onVerticalDragEnd: (details) {
-              // Si deslizas hacia abajo con velocidad, cerramos la pantalla
               if (details.primaryVelocity != null &&
                   details.primaryVelocity! > 500) {
                 Navigator.pop(context);
@@ -2119,7 +1969,6 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  // 🎨 MÉTODO DE FONDO
   Widget _buildThemedBackground(bool isDark) {
     return Container(
       decoration: BoxDecoration(
@@ -2221,6 +2070,10 @@ class _PlayerScreenState extends State<PlayerScreen>
     int songId,
     double size,
   ) {
+    // Calculate favorite status once to improve performance
+    final bool isFavorite = audio.isSongFavorite(current);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    // final bool isFavorite = audio.isSongFavorite(current);
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         if (details.primaryVelocity != null) {
@@ -2231,6 +2084,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Background shadow
           Container(
             width: size,
             height: size,
@@ -2245,6 +2099,7 @@ class _PlayerScreenState extends State<PlayerScreen>
               ],
             ),
           ),
+          // Rotating Vinyl Disk
           RotationTransition(
             turns: _rotationController,
             child: Container(
@@ -2265,10 +2120,12 @@ class _PlayerScreenState extends State<PlayerScreen>
               child: CustomPaint(painter: VinylLinesPainter()),
             ),
           ),
+          // Album Art
           RotationTransition(
             turns: _rotationController,
             child: ClipOval(child: _buildDiskArt(songId, size * 0.45)),
           ),
+          // Center Pin (Spindle)
           Container(
             width: 12,
             height: 12,
@@ -2280,6 +2137,27 @@ class _PlayerScreenState extends State<PlayerScreen>
               ],
             ),
           ),
+          // Favorite Button
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite
+                      ? Colors.red
+                      : (isDark ? Colors.white70 : Colors.black54),
+                  size: 28,
+                ),
+                onPressed: () => audio.toggleFavoriteSong(current),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2287,8 +2165,9 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   Widget _buildDiskArt(int songId, double artsize) {
     if (songId == 0) return _defaultDiskIcon(artsize);
-    if (_coverCache.containsKey(songId))
+    if (_coverCache.containsKey(songId)) {
       return _diskImageContainer(_coverCache[songId], artsize);
+    }
 
     return FutureBuilder<Uint8List?>(
       future: OnAudioQuery().queryArtwork(songId, ArtworkType.AUDIO, size: 500),
@@ -2516,12 +2395,11 @@ class _PlayerScreenState extends State<PlayerScreen>
 
 class VinylLinesPainter extends CustomPainter {
   @override
-  @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.white.withOpacity(0.06)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0; // 👈 Asegúrate de que solo esté esto en la línea
+      ..strokeWidth = 1.0;
 
     final center = Offset(size.width / 2, size.height / 2);
     for (var i = 1; i < 15; i++) {
@@ -2533,7 +2411,6 @@ class VinylLinesPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Widget PlaylistButton
 class PlaylistButton extends StatelessWidget {
   const PlaylistButton({super.key});
 
@@ -2668,37 +2545,101 @@ class PlaylistButton extends StatelessWidget {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                onSelected: (value) => _handleMenuAction(
-                                  context,
-                                  value,
-                                  song,
-                                  audio,
-                                  index,
-                                ),
-                                itemBuilder: (context) => [
-                                  _buildPopupItem(
-                                    'play_now',
-                                    Icons.play_arrow,
-                                    "Reproducir ahora",
-                                  ),
-                                  _buildPopupItem(
-                                    'info',
-                                    Icons.info_outline,
-                                    "Detalles",
-                                  ),
-                                  _buildPopupItem(
-                                    'add_playlist',
-                                    Icons.playlist_add,
-                                    "Añadir a playlist",
-                                  ),
-                                  const PopupMenuDivider(),
-                                  _buildPopupItem(
-                                    'remove',
-                                    Icons.delete_outline,
-                                    "Quitar de la cola",
-                                    isDestructive: true,
-                                  ),
-                                ],
+                                onSelected: (value) {
+                                  // IMPORTANTE: Para 'favorite' no cerramos el menú manualmente si queremos tiempo real,
+                                  // pero PopupMenuButton cierra por defecto al seleccionar.
+                                  // Si usas el StatefulBuilder de abajo, manejamos el click internamente.
+                                  if (value != 'favorite') {
+                                    _handleMenuAction(
+                                      context,
+                                      value,
+                                      song,
+                                      audio,
+                                      index,
+                                    );
+                                  }
+                                },
+                                itemBuilder: (context) {
+                                  return [
+                                    _buildPopupItem(
+                                      'play_now',
+                                      Icons.play_arrow,
+                                      "Reproducir ahora",
+                                    ),
+                                    _buildPopupItem(
+                                      'info',
+                                      Icons.info_outline,
+                                      "Detalles",
+                                    ),
+                                    _buildPopupItem(
+                                      'add_playlist',
+                                      Icons.playlist_add,
+                                      "Añadir a playlist",
+                                    ),
+
+                                    // --- ITEM DE FAVORITO CON TIEMPO REAL ---
+                                    PopupMenuItem<String>(
+                                      value: 'favorite',
+                                      child: StatefulBuilder(
+                                        builder: (context, setMenuItemState) {
+                                          final bool isFav = audio
+                                              .isSongFavorite(song);
+                                          return InkWell(
+                                            onTap: () async {
+                                              // Ejecuta la lógica del provider
+                                              await audio.toggleFavoriteSong(
+                                                song,
+                                              );
+                                              // Refresca el estado SOLO de este item
+                                              setMenuItemState(() {});
+                                            },
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  isFav
+                                                      ? Icons.favorite
+                                                      : Icons.favorite_border,
+                                                  color: isFav
+                                                      ? Colors.red
+                                                      : (Theme.of(
+                                                                  context,
+                                                                ).brightness ==
+                                                                Brightness.dark
+                                                            ? Colors.blueGrey
+                                                            : Colors.black54),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(
+                                                  isFav
+                                                      ? "Quitar de favoritos"
+                                                      : "Añadir a favoritos",
+                                                  style: TextStyle(
+                                                    color:
+                                                        Theme.of(
+                                                              context,
+                                                            ).brightness ==
+                                                            Brightness.dark
+                                                        ? Colors.white
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+
+                                    const PopupMenuDivider(),
+
+                                    _buildPopupItem(
+                                      'remove',
+                                      Icons.delete_outline,
+                                      "Quitar de la cola",
+                                      isDestructive: true,
+                                    ),
+                                  ];
+                                },
                               ),
                               const Icon(
                                 Icons.drag_handle,
@@ -2708,6 +2649,7 @@ class PlaylistButton extends StatelessWidget {
                             ],
                           ),
                           onTap: () {
+                            audio.registrarReproduccionUniversal(song);
                             audio.playItems(queue, startIndex: index);
                             Navigator.pop(context);
                           },
@@ -2724,15 +2666,16 @@ class PlaylistButton extends StatelessWidget {
     );
   }
 
-  void _handleMenuAction(
+  Future<void> _handleMenuAction(
     BuildContext context,
     String value,
     MediaItem song,
     AudioProvider audio,
     int index,
-  ) {
+  ) async {
     switch (value) {
       case 'play_now':
+        audio.registrarReproduccionUniversal(song);
         audio.playItems([song]);
         Navigator.pop(context);
         break;
@@ -2741,6 +2684,16 @@ class PlaylistButton extends StatelessWidget {
         break;
       case 'add_playlist':
         _showPlaylistSelector(context, song);
+        break;
+      // ✅ Corregido: Quitamos los espacios extra y el texto en español
+      case 'favorite':
+        audio.toggleFavoriteSong(song);
+
+        // Si tu _menuTile está dentro de un StatefulWidget,
+        // probablemente necesites llamar a setState(() {}) aquí
+        // para que el icono cambie visualmente antes de cerrar.
+        Navigator.pop(context);
+        // No olvides el Navigator.pop(context) si quieres que el menú se cierre al marcar
         break;
       case 'remove':
         audio.removeFromQueue(index);
@@ -2774,30 +2727,100 @@ class PlaylistButton extends StatelessWidget {
 
   void _showSongDetails(BuildContext context, MediaItem song) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Extraemos datos adicionales de los 'extras' del MediaItem
+    final String path =
+        song.extras?['url'] ??
+        song.id; // La ID suele ser la ruta en archivos locales
+    final String genre = song.genre ?? "Desconocido";
+
+    // Obtenemos el nombre de la carpeta a partir de la ruta
+    final String folder = path.split('/').length > 1
+        ? path.split('/')[path.split('/').length - 2]
+        : "Raíz";
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Detalles de la canción"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        title: Row(
           children: [
-            Text("Título: ${song.title}"),
-            Text("Artista: ${song.artist ?? 'Desconocido'}"),
-            Text("Álbum: ${song.album ?? 'Desconocido'}"),
-            if (song.duration != null)
-              Text(
-                "Duración: ${song.duration!.inMinutes}:${(song.duration!.inSeconds % 60).toString().padLeft(2, '0')}",
-              ),
+            Icon(
+              Icons.info_outline,
+              color: isDark ? Colors.blueGrey : AppColors.primary,
+            ),
+            const SizedBox(width: 10),
+            const Text("Detalles de la canción"),
           ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _detailRow("Título", song.title, isDark),
+              _detailRow("Artista", song.artist ?? 'Desconocido', isDark),
+              _detailRow("Álbum", song.album ?? 'Desconocido', isDark),
+              _detailRow("Género", genre, isDark),
+              if (song.duration != null)
+                _detailRow(
+                  "Duración",
+                  "${song.duration!.inMinutes}:${(song.duration!.inSeconds % 60).toString().padLeft(2, '0')}",
+                  isDark,
+                ),
+              const Divider(),
+              _detailRow("Carpeta", folder, isDark),
+              _detailRow("Ubicación", path, isDark, isPath: true),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               "Cerrar",
-              style: TextStyle(color: isDark ? Colors.white : AppColors.accent),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white70 : AppColors.primary,
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget auxiliar para organizar las filas de detalles
+  Widget _detailRow(
+    String label,
+    String value,
+    bool isDark, {
+    bool isPath = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: isDark ? Colors.blueGrey : Colors.grey[600],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white : Colors.black87,
+              // Si es la ruta, permitimos que sea pequeña para que quepa mejor
+              fontStyle: isPath ? FontStyle.italic : FontStyle.normal,
+            ),
+            maxLines: isPath ? 3 : 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

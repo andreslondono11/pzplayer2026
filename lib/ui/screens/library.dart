@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:pzplayer/ui/widgets/album_detalle.dart';
 import 'package:pzplayer/ui/widgets/artista_detalle.dart'
     show ArtistDetailScreen;
+import 'package:pzplayer/ui/widgets/favorite.dart';
 import 'package:pzplayer/ui/widgets/genre_detalle.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -93,7 +94,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       String letter = '#';
 
       // 👇 CORRECCIÓN SEGURA: Verificamos longitud antes de acceder al índice
-      if (item.title.isNotEmpty && item.title.length >= 1) {
+      if (item.title.isNotEmpty && item.title.isNotEmpty) {
         letter = item.title[0].toUpperCase();
         if (!RegExp(r'[A-Z]').hasMatch(letter)) {
           letter = '#';
@@ -113,7 +114,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     for (int i = 0; i < _sortedItems.length; i++) {
       final title = _sortedItems[i].title;
       // 👇 CORRECCIÓN SEGURA AQUÍ TAMBIÉN
-      if (title.isNotEmpty && title.length >= 1) {
+      if (title.isNotEmpty && title.isNotEmpty) {
         String letter = title[0].toUpperCase();
         if (!RegExp(r'[A-Z]').hasMatch(letter)) {
           letter = '#';
@@ -176,7 +177,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               songId: songId,
               isDark: isDark,
               artworkCache: _artworkCache,
-              onTap: () => audio.playItems(_sortedItems, startIndex: index),
+              onTap: () => _playSongFromLibrary(context, audio, item, index),
               onMenuPressed: () => _showSongMenu(context, item, isLandscape),
             );
           },
@@ -256,9 +257,24 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
+  // ✅ NUEVA FUNCIÓN: Maneja el Play con Registro
+  void _playSongFromLibrary(
+    BuildContext context,
+    AudioProvider audio,
+    MediaItem item,
+    int index,
+  ) {
+    // 1. Registramos la reproducción (Canción, Álbum, Artista, Género)
+    audio.registrarReproduccionUniversal(item);
+
+    // 2. Reproducimos la lista ordenada
+    audio.playItems(_sortedItems, startIndex: index);
+  }
+
   void _showSongMenu(BuildContext context, MediaItem song, bool isLandscape) {
     final audio = context.read<AudioProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isFav = audio.isSongFavorite(song);
 
     showModalBottomSheet(
       context: context,
@@ -272,12 +288,38 @@ class _LibraryScreenState extends State<LibraryScreen>
             children: [
               _menuTile(Icons.play_arrow, "Reproducir ahora", () {
                 Navigator.pop(context);
+                // ✅ REGISTRO AQUÍ TAMBIÉN
+                audio.registrarReproduccionUniversal(song);
                 audio.playItems([song]);
               }, isDark),
               _menuTile(Icons.queue_play_next, "Reproducir siguiente", () {
                 Navigator.pop(context);
                 audio.playNext(song);
               }, isDark),
+
+              _menuTile(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                isFav ? "Quitar de favoritos" : "Añadir a favoritos",
+                () {
+                  audio.toggleFavoriteSong(song);
+                  // Si tu _menuTile está dentro de un StatefulWidget,
+                  // probablemente necesites llamar a setState(() {}) aquí
+                  // para que el icono cambie visualmente antes de cerrar.
+                  Navigator.pop(context);
+                },
+                isDark,
+              ),
+
+              _menuTile(Icons.favorite, "Ir a favoritos", () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FavoriteSongsScreen(),
+                  ),
+                );
+              }, isDark),
+
               _menuTile(Icons.queue_music, "Añadir a la cola", () {
                 Navigator.pop(context);
                 audio.addToQueue(song);
@@ -527,7 +569,6 @@ class _SongListTile extends StatelessWidget {
   final bool isDark;
   final VoidCallback onTap;
   final VoidCallback onMenuPressed;
-  final Map<int, Uint8List?> artworkCache;
 
   const _SongListTile({
     super.key,
@@ -536,47 +577,32 @@ class _SongListTile extends StatelessWidget {
     required this.isDark,
     required this.onTap,
     required this.onMenuPressed,
-    required this.artworkCache,
+    required Map<int, Uint8List?> artworkCache,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (artworkCache.containsKey(songId)) {
-      return _buildTile(artworkCache[songId]);
-    }
-
-    return FutureBuilder<Uint8List?>(
-      future: songId == 0
-          ? Future.value(null)
-          : OnAudioQuery().queryArtwork(
-              songId,
-              ArtworkType.AUDIO,
-              format: ArtworkFormat.JPEG,
-              size: 150,
-            ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          artworkCache[songId] = snapshot.data;
-          return _buildTile(snapshot.data);
-        }
-        return _buildTile(null);
-      },
-    );
-  }
-
-  Widget _buildTile(Uint8List? imageBytes) {
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: isDark
-            ? Colors.white.withOpacity(0.05)
-            : AppColors.primary.withOpacity(0.05),
-        backgroundImage: imageBytes != null ? MemoryImage(imageBytes) : null,
-        child: imageBytes == null
-            ? Icon(
-                Icons.music_note,
-                color: isDark ? Colors.blueGrey : AppColors.primary,
-              )
-            : null,
+      onTap: onTap,
+      leading: QueryArtworkWidget(
+        id: songId,
+        type: ArtworkType.AUDIO,
+        format: ArtworkFormat.JPEG,
+        size: 150,
+        // 👇 ESTO EVITA EL PARPADEO: Mantiene la imagen anterior mientras carga la nueva
+        keepOldArtwork: true,
+        // 👇 EL NOMBRE CORRECTO ES 'placeholder'
+        nullArtworkWidget: CircleAvatar(
+          backgroundColor: isDark
+              ? Colors.white.withOpacity(0.05)
+              : AppColors.primary.withOpacity(0.05),
+          child: Icon(
+            Icons.music_note,
+            color: isDark ? Colors.blueGrey : AppColors.primary,
+          ),
+        ),
+        artworkBorder: BorderRadius.circular(25),
+        artworkFit: BoxFit.cover,
       ),
       title: Text(
         item.title,
@@ -590,7 +616,6 @@ class _SongListTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: isDark ? AppTextStyles.captionDark : AppTextStyles.captionLight,
       ),
-      onTap: onTap,
       trailing: IconButton(
         icon: Icon(
           Icons.more_vert,

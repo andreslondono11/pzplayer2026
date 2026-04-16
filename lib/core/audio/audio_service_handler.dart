@@ -1,4 +1,3 @@
-// import 'dart:io';
 // import 'package:audio_service/audio_service.dart';
 // import 'package:just_audio/just_audio.dart';
 // import 'package:on_audio_query/on_audio_query.dart';
@@ -175,11 +174,12 @@
 //     );
 //   }
 // }
-import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class AudioServiceHandler extends BaseAudioHandler {
   final AudioPlayer _player = AudioPlayer();
@@ -188,7 +188,7 @@ class AudioServiceHandler extends BaseAudioHandler {
   AudioServiceHandler() {
     _player.playbackEventStream.listen(_broadcastState);
 
-    // 🔑 ESCUCHAR CAMBIOS DE CANCIÓN Y METADATA
+    // 1. ACTUALIZACIÓN DE METADATA
     _player.sequenceStateStream.listen((sequenceState) {
       final currentSource = sequenceState?.currentSource;
       if (currentSource != null && currentSource.tag is MediaItem) {
@@ -207,7 +207,17 @@ class AudioServiceHandler extends BaseAudioHandler {
       }
     });
 
-    // 🔑 SOLUCIÓN AL PLAY INSERVIBLE:
+    // 2. 🔥 AUTO-REGISTRO AL CAMBIAR DE CANCIÓN
+    _player.currentIndexStream.listen((index) {
+      if (index != null) {
+        final currentItem = queue.value[index];
+        if (currentItem != null) {
+          _registerPlayGlobal(currentItem);
+        }
+      }
+    });
+
+    // 3. Solución al play inservible al final
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
         _player.pause();
@@ -219,6 +229,41 @@ class AudioServiceHandler extends BaseAudioHandler {
   AudioPlayer get player => _player;
   Stream<Duration> get positionStream => _player.positionStream;
   Stream<Duration?> get durationStream => _player.durationStream;
+
+  bool get shuffleMode => _player.shuffleModeEnabled;
+  Stream<bool> get shuffleModeStream => _player.shuffleModeEnabledStream;
+
+  // Sobrescribimos esto para que se pueda llamar si algún botón externo lo pide
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    final enable = shuffleMode != AudioServiceShuffleMode.none;
+    await _player.setShuffleModeEnabled(enable);
+    _broadcastState(_player.playbackEvent);
+  }
+
+  // ---------------------------------------------------------
+  // 🔥 GUARDADO DE ESTADÍSTICAS
+  // ---------------------------------------------------------
+  Future<void> _registerPlayGlobal(MediaItem item) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      const String keySongs = 'counts_songs';
+
+      Map<String, dynamic> songsMap = jsonDecode(
+        prefs.getString(keySongs) ?? '{}',
+      );
+
+      final String songId = item.extras?['dbId']?.toString() ?? item.id;
+
+      songsMap[songId] = (songsMap[songId] ?? 0) + 1;
+
+      await prefs.setString(keySongs, jsonEncode(songsMap));
+
+      print("✅ [Service] Registrado: ${item.title}");
+    } catch (e) {
+      print("❌ [Service] Error: $e");
+    }
+  }
 
   @override
   Future<void> updateQueue(List<MediaItem> newQueue) async {
@@ -266,66 +311,58 @@ class AudioServiceHandler extends BaseAudioHandler {
   }
 
   // ---------------------------------------------------------
-  // 🔑 FUNCIÓN CORREGIDA: PROGRESO EN NOTIFICACIÓN (GESTOR)
+  // ARCHIVOS EXTERNOS
   // ---------------------------------------------------------
   Future<void> prepareExternalFile(String filePath) async {
     try {
       String fileName = path.basename(filePath);
       String title = path.basenameWithoutExtension(filePath);
 
-      // 1. Creamos el MediaItem inicial (sin duración conocida aún)
       final tempMediaItem = MediaItem(
         id: filePath,
         title: title,
         artist: "Archivo Local",
         artUri: null,
-        duration: Duration.zero, // Inicialmente cero
+        duration: Duration.zero,
       );
 
-      // 2. Limpiamos la cola anterior
       queue.add([]);
 
-      // 3. Cargamos la fuente
       final AudioSource source = AudioSource.uri(
         Uri.file(filePath),
         tag: tempMediaItem,
       );
 
-      // 4. 👇 CLAVE: Cargamos el audio en el jugador (PREPARE)
-      // Esto lee el archivo y obtiene la duración real, pero NO reproduce todavía.
       await _player.setAudioSource(
         source,
         initialIndex: 0,
         initialPosition: Duration.zero,
       );
 
-      // 5. Esperamos un momento muy breve a que el jugador obtenga la duración
-      // (A veces es inmediato, a veces tarda unos milisegundos)
       await _player.pause();
 
-      // 6. Obtenemos la duración real que el jugador acaba de leer del archivo
       final Duration realDuration = _player.duration ?? Duration.zero;
-
-      // 7. Creamos un NUEVO MediaItem con la duración correcta
       final finalMediaItem = tempMediaItem.copyWith(duration: realDuration);
 
-      // 8. 👇 ACTUALIZAMOS LA NOTIFICACIÓN con el MediaItem que ya tiene duración
       mediaItem.add(finalMediaItem);
 
-      // 9. Ahora sí, reproducimos
+      await _registerPlayGlobal(finalMediaItem);
+
       await play();
     } catch (e) {
       print("❌ Error al cargar archivo externo: $e");
     }
   }
 
-  // 🔑 BROADCAST DE ESTADO
+  // ---------------------------------------------------------
+  // BROADCAST (LIMPIO DE ERRORES DE SHUFFLE)
+  // ---------------------------------------------------------
   void _broadcastState(PlaybackEvent event) {
     playbackState.add(
       playbackState.value.copyWith(
-        controls: [
+        controls: const [
           MediaControl.skipToPrevious,
-          _player.playing ? MediaControl.pause : MediaControl.play,
+          MediaControl.pause,
           MediaControl.stop,
           MediaControl.skipToNext,
         ],
@@ -333,8 +370,12 @@ class AudioServiceHandler extends BaseAudioHandler {
           MediaAction.seek,
           MediaAction.skipToNext,
           MediaAction.skipToPrevious,
+          // Eliminado: MediaAction.shuffle (No existe en versiones estándar)
         },
-        androidCompactActionIndices: const [0, 1, 3],
+        androidCompactActionIndices: const [0, 1, 3], // Prev, Play, Next
+        shuffleMode: _player.shuffleModeEnabled
+            ? AudioServiceShuffleMode.all
+            : AudioServiceShuffleMode.none,
         processingState:
             const {
               ProcessingState.idle: AudioProcessingState.idle,

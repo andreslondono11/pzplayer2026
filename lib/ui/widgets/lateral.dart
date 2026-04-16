@@ -25,7 +25,7 @@
 //             const Icon(Icons.music_note, size: 50, color: AppColors.primary),
 //             const SizedBox(height: 15),
 //             const Text(
-//               "Versión: 12.25.1+12",
+//               "Versión: 13.28.0+13",
 //               style: TextStyle(fontWeight: FontWeight.bold),
 //             ),
 //             const Text("Build: 2026.03.21"),
@@ -194,7 +194,7 @@
 //                     showAboutDialog(
 //                       context: context,
 //                       applicationName: "PZ Player",
-//                       applicationVersion: "12.25.1+12",
+//                       applicationVersion: "13.28.0+13",
 //                       applicationIcon: Icon(
 //                         Icons.play_circle_fill,
 //                         size: 45,
@@ -276,7 +276,7 @@ class MainDrawer extends StatelessWidget {
             const Icon(Icons.music_note, size: 50, color: AppColors.primary),
             const SizedBox(height: 15),
             const Text(
-              "Versión: 12.25.1+12",
+              "Versión: 13.28.0+13",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const Text("Build: 2026.03.21"),
@@ -506,7 +506,7 @@ class MainDrawer extends StatelessWidget {
                     showAboutDialog(
                       context: context,
                       applicationName: "PZ Player",
-                      applicationVersion: "12.25.1+12",
+                      applicationVersion: "13.28.0+13",
                       applicationIcon: Icon(
                         Icons.play_circle_fill,
                         size: 45,

@@ -212,6 +212,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
 import 'package:on_audio_query/on_audio_query.dart'; // Asegúrate de tener esta dependencia
 import 'package:pzplayer/ui/widgets/artista_detalle.dart';
+import 'package:pzplayer/ui/widgets/favorite.dart';
 import 'package:pzplayer/ui/widgets/player_controls.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -245,7 +246,7 @@ class PlaylistDetailScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-
+    final bool isFav = audio.isSongFavorite(song);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -269,6 +270,30 @@ class PlaylistDetailScreen extends StatelessWidget {
                 Navigator.pop(context);
                 audio.playNext(song);
               }, isDark),
+
+              _menuTile(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                isFav ? "Quitar de favoritos" : "Añadir a favoritos",
+                () {
+                  audio.toggleFavoriteSong(song);
+                  // Si tu _menuTile está dentro de un StatefulWidget,
+                  // probablemente necesites llamar a setState(() {}) aquí
+                  // para que el icono cambie visualmente antes de cerrar.
+                  Navigator.pop(context);
+                },
+                isDark,
+              ),
+
+              _menuTile(Icons.favorite, "Ir a favoritos", () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FavoriteSongsScreen(),
+                  ),
+                );
+              }, isDark),
+
               _menuTile(Icons.queue_music, "Añadir a la cola", () {
                 Navigator.pop(context);
                 audio.addToQueue(song);

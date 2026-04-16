@@ -1,122 +1,214 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" package="com.pzplayer.co.pzplayer">
+ "Escucha $songTitle de $album, un viaje sonoro único.",
+
+      "Deja que $songTitle te acompañe en tu momento de inspiración.",
+
+      "Con $songTitle, cada paso se siente más ligero.",
+
+      "El ritmo de $songTitle es la chispa que necesitas.",
+
+      "Nada mejor que $songTitle para empezar la mañana.",
+
+      "Sumérgete en $songTitle y olvida las preocupaciones.",
+
+      "El estilo de $album en $songTitle es pura magia.",
+
+      "Haz que tu día brille con $songTitle.",
+
+      "Cuando suena $songTitle, todo se transforma.",
+
+      "La melodía de $songTitle es un abrazo sonoro.",
+
+      "Déjate llevar por la energía de $songTitle.",
+
+      "El flow de $songTitle te impulsa hacia adelante.",
+
+      "Con $songTitle, cada momento se vuelve especial.",
+
+      "El arte de $album en $songTitle es inolvidable.",
+
+      "Escuchar $songTitle es como viajar sin moverte.",
+
+      "El ritmo de $songTitle te conecta con tu esencia.",
+
+      "Nada como $songTitle para recargar energías.",
+
+      "La vibra de $songTitle ilumina cualquier espacio.",
+
+      "Haz de $songTitle tu soundtrack personal.",
+
+      "El poder de $songTitle está en su sencillez.",
+
+      "Con $songTitle, la rutina se vuelve aventura.",
+
+      "El toque de $album en $songTitle es único.",
+
+      "Cada nota de $songTitle es un recordatorio de alegría.",
+
+      "El beat de $songTitle es pura motivación.",
+
+      "Haz que $songTitle sea tu himno del día.",
+
+      "La fuerza de $songTitle te acompaña siempre.",
+
+      "El sonido de $songTitle es pura libertad.",
+
+      "Con $songTitle, todo parece posible.",
+
+      "El estilo de $songTitle es perfecto para relajarte.",
+
+      "Haz que $songTitle sea tu refugio musical.",
+
+      "El ritmo de $songTitle te invita a bailar.",
+
+      "Nada como $songTitle para cerrar el día.",
+
+      "El arte de $album brilla en $songTitle.",
+
+      "Cada acorde de $songTitle es un regalo.",
+
+      "Haz que $songTitle sea tu momento zen.",
+
+      "El beat de $songTitle te llena de energía positiva.",
+
+      "Con $songTitle, la noche se vuelve mágica.",
+
+      "El poder de $songTitle está en su vibra.",
+
+      "Haz que $songTitle sea tu impulso creativo.",
+
+      "El ritmo de $songTitle es pura adrenalina.",
+
+      "Nada como $songTitle para inspirarte.",
+
+      "El estilo de $songTitle es perfecto para soñar.",
+
+      "Haz que $songTitle sea tu pausa musical.",
+
+      "El sonido de $songTitle es un viaje interior.",
+
+      "Con $songTitle, cada instante se disfruta más.",
+
+      "El beat de $songTitle es tu mejor compañía.",
+
+      "Haz que $songTitle sea tu energía diaria.",
+
+      "El arte de $album se siente en cada nota de $songTitle.",
+
+      "Nada como $songTitle para acompañar tu camino.",
+
+      "El ritmo de $songTitle es pura motivación.",
+
+      "Haz que $songTitle sea tu inspiración constante.",
+
+      "El poder de $songTitle está en su esencia.",
+
+      "Con $songTitle, todo fluye mejor.",
+
+      "El estilo de $songTitle es perfecto para meditar.",
+
+      "Haz que $songTitle sea tu momento de calma.",
+
+      "El beat de $songTitle te conecta con la vida.",
+
+      "Nada como $songTitle para empezar con fuerza.",
+
+      "El sonido de $songTitle es pura emoción.",
+
+      "Haz que $songTitle sea tu chispa creativa.",
+
+      "El ritmo de $songTitle te invita a moverte.",
+
+      "Con $songTitle, cada día es especial.",
+
+      "El arte de $album transforma $songTitle en magia.",
+
+      "Haz que $songTitle sea tu refugio sonoro.",
+
+      "El beat de $songTitle es tu motor interno.",
+
+      "Nada como $songTitle para relajarte al final del día.",
+
+      "El estilo de $songTitle es pura elegancia.",
+
+      "Haz que $songTitle sea tu energía nocturna.",
+
+      "El poder de $songTitle está en su ritmo.",
+
+      "Con $songTitle, todo se siente más ligero.",
+
+      "El sonido de $songTitle es pura inspiración.",
+
+      "Haz que $songTitle sea tu canción del momento.",
+
+      "El beat de $songTitle te impulsa hacia adelante.",
+
+      "Nada como $songTitle para acompañar tu viaje.",
+
+      "El arte de $album en $songTitle es inolvidable.",
+
+      "Haz que $songTitle sea tu mantra musical.",
+
+      "El ritmo de $songTitle es pura alegría.",
+
+      "Con $songTitle, cada instante vibra más.",
+
+      "El estilo de $songTitle es perfecto para motivarte.",
+
+      "Haz que $songTitle sea tu pausa energética.",
+
+      "El sonido de $songTitle es pura calma.",
+
+      "Nada como $songTitle para encender tu día.",
+
+      "El beat de $songTitle es tu mejor aliado.",
+
+      "Haz que $songTitle sea tu soundtrack personal.",
+
+      "El poder de $songTitle está en su melodía.",
+
+      "Con $songTitle, todo se vuelve más brillante.",
+
+      "El arte de $album refleja en $songTitle.",
+
+      "Haz que $songTitle sea tu impulso diario.",
+
+      "El ritmo de $songTitle es pura pasión.",
+      "Con $songTitle, cada día se siente mejor.",
+      "Pzplatinum te dice gracias por estar aquí y no olvides compartir esta aplicación",
+      "Este artista $album es de los mejores en su carrera.",
+      "PZPlayer presenta: $songTitle, el sonido que define tu camino.",
+      "Nada como $songTitle para inspirar tu creatividad.",
+
+      "El estilo de $songTitle es perfecto para disfrutar.",
+
+      "Haz que $songTitle sea tu momento de paz.",
+
+      "El sonido de $songTitle es pura energía.",
 
 
-  <!-- ✅ Permisos -->
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-  <uses-permission android:name="android.permission.WAKE_LOCK" />
-  <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
-  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-      tools:ignore="ScopedStorage" />
-
-  <application
-      android:name="${applicationName}"
-      android:label="PZ Player"
-      android:icon="@mipmap/ic_launcher"
-      android:requestLegacyExternalStorage="true">
-
-    <!-- ✅ Ícono de notificación -->
-    <meta-data
-        android:name="com.google.android.foreground_service.notification_icon"
-        android:resource="@drawable/ic_notification" />
-
-    <!-- ✅ Tema de Flutter -->
-    <meta-data
-        android:name="io.flutter.embedding.android.NormalTheme"
-        android:resource="@style/NormalTheme" />
-
-    <!-- ✅ Flutter embedding -->
-    <meta-data
-        android:name="flutterEmbedding"
-        android:value="2" />
-
-    <!-- ✅ Actividad principal -->
-    <activity
-        android:name="com.ryanheise.audioservice.AudioServiceActivity"
-        android:exported="true"
-        android:launchMode="singleTop"
-        android:taskAffinity=""
-        android:theme="@style/LaunchTheme"
-        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-        android:hardwareAccelerated="true"
-        android:windowSoftInputMode="adjustResize">
-
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
-
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="content" />
-        <data android:scheme="file" />
-        <data android:mimeType="audio/*" />
-      </intent-filter>
-    </activity>
-
-    <!-- ✅ Servicio de audio -->
-    <service
-        android:name="com.ryanheise.audioservice.AudioService"
-        android:foregroundServiceType="mediaPlayback"
-        android:exported="true">
-      <intent-filter>
-        <action android:name="android.media.browse.MediaBrowserService" />
-      </intent-filter>
-    </service>
-
-    <!-- ✅ Receptor de botones multimedia -->
-    <receiver
-        android:name="com.ryanheise.audioservice.MediaButtonReceiver"
-        android:exported="true">
-      <intent-filter>
-        <action android:name="android.intent.action.MEDIA_BUTTON" />
-      </intent-filter>
-    </receiver>
-
-   
-
-  </application>
-
-  <!-- ✅ Soporte para compartir texto -->
-  <queries>
-    <intent>
-      <action android:name="android.intent.action.PROCESS_TEXT" />
-      <data android:mimeType="text/plain" />
-    </intent>
-  </queries>
-</manifest>
 
 
-
-
-    <receiver android:name=".widget.PlayerWidget" android:exported="true">
-      <intent-filter>
-        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-      </intent-filter>
-      <meta-data
-          android:name="android.appwidget.provider"
-          android:resource="@xml/player_widget_info" />
-    </receiver>
-
-
-
-
-package com.pzplayer.co.pzplayer.widget
-
-import es.antonborri.home_widget.HomeWidgetProvider
-
-class PlayerWidgetReceiver : HomeWidgetProvider() {
-    // Esta clase puede quedar vacía o puedes usarla para lógica específica.
-    // Al heredar de HomeWidgetProvider, ya es compatible con el plugin.
-}
-
-
-"com.ryanheise.audioservice.AudioServiceActivity"
+// Definimos el estado actual antes de construir el widget
+final bool isFav = audio.isSongFavorite(song);
+ _menuTile(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                isFav ? "Quitar de favoritos" : "Añadir a favoritos",
+                () {
+                  audio.toggleFavoriteSong(song);
+                  // Si tu _menuTile está dentro de un StatefulWidget,
+                  // probablemente necesites llamar a setState(() {}) aquí
+                  // para que el icono cambie visualmente antes de cerrar.
+                  Navigator.pop(context);
+                },
+                isDark,
+              ),
+             
+              _menuTile(Icons.favorite, "Ir a favoritos", () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FavoriteSongsScreen(),
+                  ),
+                );
+              }, isDark),

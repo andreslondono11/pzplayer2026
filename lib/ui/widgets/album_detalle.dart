@@ -1,9 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Necesario para pedir la imagen
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:pzplayer/ui/widgets/artista_detalle.dart';
+import 'package:pzplayer/ui/widgets/favorite.dart';
 import 'package:pzplayer/ui/widgets/player_controls.dart';
 import '../../core/audio/audio_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -22,21 +22,20 @@ class AlbumDetailScreen extends StatelessWidget {
 
   // --- Lógica de Utilidad ---
 
-  // 🔑 Modificamos para que intente obtener el ID de la canción
   int _getSongId(MediaItem? item) {
     final dynamic rawId = item?.extras?['dbId'];
     if (rawId is int) return rawId;
     return int.tryParse(rawId?.toString() ?? '0') ?? 0;
   }
 
-  // --- Menús y Diálogos (INTACTOS) ---
+  // --- Menús y Diálogos ---
 
   void _showSongMenu(BuildContext context, MediaItem song) {
     final audio = context.read<AudioProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-
+    final bool isFav = audio.isSongFavorite(song);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -54,12 +53,38 @@ class AlbumDetailScreen extends StatelessWidget {
             children: [
               _menuTile(Icons.play_arrow, "Reproducir ahora", () {
                 Navigator.pop(context);
+                // ✅ REGISTRO EN EL MENÚ
+                audio.registrarReproduccionUniversal(song);
                 audio.playItems([song]);
               }, isDark),
               _menuTile(Icons.queue_play_next, "Reproducir siguiente", () {
                 Navigator.pop(context);
                 audio.playNext(song);
               }, isDark),
+
+              _menuTile(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                isFav ? "Quitar de favoritos" : "Añadir a favoritos",
+                () {
+                  audio.toggleFavoriteSong(song);
+                  // Si tu _menuTile está dentro de un StatefulWidget,
+                  // probablemente necesites llamar a setState(() {}) aquí
+                  // para que el icono cambie visualmente antes de cerrar.
+                  Navigator.pop(context);
+                },
+                isDark,
+              ),
+
+              _menuTile(Icons.favorite, "Ir a favoritos", () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FavoriteSongsScreen(),
+                  ),
+                );
+              }, isDark),
+
               _menuTile(Icons.queue_music, "Añadir a la cola", () {
                 Navigator.pop(context);
                 audio.addToQueue(song);
@@ -196,18 +221,29 @@ class AlbumDetailScreen extends StatelessWidget {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    // 🔑 Obtenemos el ID de la primera canción para la portada del álbum
+    // Obtenemos el ID de la primera canción para la portada
     final int albumSongId = songs.isNotEmpty ? _getSongId(songs.first) : 0;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          // albumName,
           'Detalles del Album',
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,
         ),
+        actions: [
+          // ✅ NUEVO: Botón para reproducir todo el álbum
+          if (songs.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.play_circle_outline),
+              onPressed: () {
+                final audio = context.read<AudioProvider>();
+                audio.registrarReproduccionUniversal(songs.first);
+                audio.playItems(songs);
+              },
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -221,7 +257,7 @@ class AlbumDetailScreen extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 🔑 PORTADA PRINCIPAL CORREGIDA
+                        // Portada Principal
                         _buildCoverArt(
                           albumSongId,
                           isDark,
@@ -259,8 +295,8 @@ class AlbumDetailScreen extends StatelessWidget {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final song = songs[index];
-                      // 🔑 ID para la imagen de cada canción en la lista
                       final int songId = _getSongId(song);
+                      final audio = context.read<AudioProvider>();
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -276,7 +312,6 @@ class AlbumDetailScreen extends StatelessWidget {
                             child: SizedBox(
                               width: 48,
                               height: 48,
-                              // 🔑 IMAGEN DE CADA FILA CORREGIDA
                               child: _buildDiskArt(songId, 48, isDark),
                             ),
                           ),
@@ -300,10 +335,11 @@ class AlbumDetailScreen extends StatelessWidget {
                             icon: const Icon(Icons.more_vert),
                             onPressed: () => _showSongMenu(context, song),
                           ),
-                          onTap: () => context.read<AudioProvider>().playItems(
-                            songs,
-                            startIndex: index,
-                          ),
+                          // ✅ TAP EN LA LISTA: Registra y reproduce
+                          onTap: () {
+                            audio.registrarReproduccionUniversal(song);
+                            audio.playItems(songs, startIndex: index);
+                          },
                           onLongPress: () => _showSongMenu(context, song),
                         ),
                       );
@@ -320,7 +356,6 @@ class AlbumDetailScreen extends StatelessWidget {
     );
   }
 
-  // 🔑 Widget auxiliar para las miniaturas de la lista
   Widget _buildDiskArt(int songId, double size, bool isDark) {
     return QueryArtworkWidget(
       id: songId,
@@ -339,7 +374,6 @@ class AlbumDetailScreen extends StatelessWidget {
     );
   }
 
-  // 🔑 Widget de la PORTADA GRANDE corregido para usar QueryArtworkWidget
   Widget _buildCoverArt(int songId, bool isDark, {double size = 200}) {
     return Container(
       decoration: BoxDecoration(

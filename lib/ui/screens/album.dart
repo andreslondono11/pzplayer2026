@@ -30,6 +30,49 @@ class AlbumScreen extends StatelessWidget {
     );
   }
 
+  /// ✅ NUEVO: Método robusto para obtener la carátula.
+  /// Intenta buscar por AlbumID, y si falla, busca por SongID.
+  Future<Uint8List?> _fetchAlbumArt(int albumId, int songId) async {
+    final audioQuery = OnAudioQuery();
+
+    // 1. Intentar por ID de Álbum (Lo ideal)
+    if (albumId > 0) {
+      try {
+        final art = await audioQuery.queryArtwork(
+          albumId,
+          ArtworkType.ALBUM,
+          format: ArtworkFormat.JPEG,
+          size: 500,
+        );
+        if (art != null && art.isNotEmpty) {
+          return art;
+        }
+      } catch (e) {
+        // Ignorar error y pasar al siguiente método
+      }
+    }
+
+    // 2. Intentar por ID de Canción (Fallback)
+    // Muchas veces la imagen está incrustada en el MP3 y no en la DB del álbum
+    if (songId > 0) {
+      try {
+        final art = await audioQuery.queryArtwork(
+          songId,
+          ArtworkType.AUDIO,
+          format: ArtworkFormat.JPEG,
+          size: 500,
+        );
+        if (art != null && art.isNotEmpty) {
+          return art;
+        }
+      } catch (e) {
+        // Ignorar error
+      }
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final albums = context.watch<AudioProvider>().albums;
@@ -55,21 +98,24 @@ class AlbumScreen extends StatelessWidget {
         final currentSongs = albums.values.elementAt(index);
 
         final firstSong = currentSongs.isNotEmpty ? currentSongs.first : null;
+
+        // Extraemos IDs de forma segura
         final dynamic rawAlbumId = firstSong?.extras?['albumId'];
         final dynamic rawSongId = firstSong?.extras?['dbId'];
 
-        // 🕵️ MODO DIAGNÓSTICO: Mira la consola de VS Code / Android Studio
-        print('--- DIAGNÓSTICO PZ PLAYER ---');
-        print('Álbum: $currentAlbumName');
-        print('AlbumID Extraído: $rawAlbumId');
-        print('SongID Extraído: $rawSongId');
-        print('Ruta del archivo: ${firstSong?.id}');
-        print('-----------------------------');
-
-        // Convertimos a int de forma segura
         final int albumId = (rawAlbumId is int)
             ? rawAlbumId
             : int.tryParse(rawAlbumId?.toString() ?? '0') ?? 0;
+
+        final int songId = (rawSongId is int)
+            ? rawSongId
+            : int.tryParse(rawSongId?.toString() ?? '0') ?? 0;
+
+        // 🕵️ MODO DIAGNÓSTICO (Conserva esto para verificar los IDs)
+        // print('--- DIAGNÓSTICO ALBUM ---');
+        // print('Álbum: $currentAlbumName');
+        // print('AlbumID: $albumId | SongID: $songId');
+        // print('-------------------------');
 
         return GestureDetector(
           onTap: () => Navigator.push(
@@ -93,33 +139,26 @@ class AlbumScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: albumId == 0
-                      ? _buildPlaceholder(isDark)
-                      : FutureBuilder<Uint8List?>(
-                          // 🔑 CAMBIO 2: Usamos ArtworkType.ALBUM y el albumId
-                          future: OnAudioQuery().queryArtwork(
-                            albumId,
-                            ArtworkType
-                                .ALBUM, // Esto es mucho más fiable para álbumes
-                            format: ArtworkFormat.JPEG,
-                            size: 500,
-                          ),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                    ConnectionState.done &&
-                                snapshot.hasData &&
-                                snapshot.data != null &&
-                                snapshot.data!.isNotEmpty) {
-                              return Image.memory(
-                                snapshot.data!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    _buildPlaceholder(isDark),
-                              );
-                            }
-                            return _buildPlaceholder(isDark);
-                          },
-                        ),
+                  child: FutureBuilder<Uint8List?>(
+                    // ✅ USAMOS EL NUEVO MÉTODO DE RESPALDO
+                    future: _fetchAlbumArt(albumId, songId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done &&
+                          snapshot.hasData &&
+                          snapshot.data != null &&
+                          snapshot.data!.isNotEmpty) {
+                        return Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true, // Evita parpadeos al redibujar
+                          errorBuilder: (_, __, ___) =>
+                              _buildPlaceholder(isDark),
+                        );
+                      }
+                      // Mientras carga o si falla
+                      return _buildPlaceholder(isDark);
+                    },
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10),

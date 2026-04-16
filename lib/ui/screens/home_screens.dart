@@ -1798,18 +1798,13 @@
 //     );
 //   }
 // }
-import 'dart:typed_data';
 
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart';
+
 import 'package:provider/provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:pzplayer/core/audio/audio_provider.dart';
 
 // Importaciones de tu proyecto
-import 'package:pzplayer/core/theme/app_colors.dart';
-import 'package:pzplayer/core/theme/app_text_styles.dart';
 import 'package:pzplayer/ui/screens/album.dart';
 import 'package:pzplayer/ui/screens/artista.dart';
 import 'package:pzplayer/ui/screens/folder.dart';
@@ -1817,7 +1812,7 @@ import 'package:pzplayer/ui/screens/genre.dart';
 import 'package:pzplayer/ui/screens/library.dart';
 import 'package:pzplayer/ui/screens/playlist.dart';
 
-import 'package:pzplayer/ui/widgets/lateral.dart';
+import 'package:pzplayer/ui/widgets/lateral.dart'; // MainDrawer
 import 'package:pzplayer/ui/widgets/player_controls.dart';
 import 'package:pzplayer/ui/widgets/utilidades.dart';
 
@@ -1839,9 +1834,9 @@ class _HomeScreenState extends State<HomeScreen>
   int _selectedIndex = 0;
 
   // ESTADOS DE CONTROL
-  bool _isLoading = true;
-  bool _permissionsGranted = false;
-  bool _tutorialSeen = false;
+  // Ya no necesitamos _permissionsGranted ni _isLoading para permisos aquí
+  // Solo necesitamos verificar si ya cargamos la biblioteca una vez si lo deseas,
+  // pero asumiremos que el Provider maneja el estado.
 
   final List<Map<String, dynamic>> _navItems = [
     {
@@ -1862,7 +1857,7 @@ class _HomeScreenState extends State<HomeScreen>
     {
       'label': "Género",
       'icon': Icons.style,
-      'widget': const GenreScreen(genreName: '', songs: []),
+      'widget': GenreScreen(genreName: '', songs: []),
     },
     {
       'label': "Playlist",
@@ -1886,13 +1881,21 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
 
-    _checkPrivacyStatus();
+    // Al iniciar, verificamos el tutorial.
+    // La carga de datos del AudioProvider debería ocurrir en IntroScreen o al
+    // acceder al provider por primera vez, pero si necesitas asegurarte aquí:
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkTutorialStatus();
+    });
   }
 
   Future<void> _checkTutorialStatus() async {
     final prefs = await SharedPreferences.getInstance();
     bool seen = prefs.getBool('tutorial_seen') ?? false;
+
+    // Solo mostrar tutorial si es la primera vez
     if (!seen) {
+      // Pequeño delay para que la pantalla cargue suavemente
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         _showTutorialSteps().then((_) {
@@ -1943,106 +1946,8 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Future<void> _checkPrivacyStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool accepted = prefs.getBool('privacy_accepted') ?? false;
-
-    if (!accepted) {
-      setState(() => _isLoading = false);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showPrivacyDialog());
-    } else {
-      _initAppPermissions();
-    }
-  }
-
-  void _showPrivacyDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.privacy_tip, color: Colors.blue),
-            SizedBox(width: 10),
-            Text("Aviso de Privacidad"),
-          ],
-        ),
-        content: const SingleChildScrollView(
-          child: Text(
-            "PZ Player valora tu privacidad. Para ofrecerte la mejor experiencia, "
-            "necesitamos acceder a tus archivos de audio locales. \n\n"
-            "• No recolectamos datos personales.\n"
-            "• Tus archivos no se suben a ningún servidor.\n"
-            "• Los permisos de notificaciones son solo para el control de reproducción.\n\n"
-            "Al presionar 'Aceptar', confirmas que estás de acuerdo con el tratamiento de datos local.",
-            style: TextStyle(fontSize: 14),
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('privacy_accepted', true);
-              Navigator.pop(context);
-              _initAppPermissions();
-            },
-            child: const Text(
-              "ACEPTAR Y CONTINUAR",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _initAppPermissions() async {
-    setState(() => _isLoading = true);
-
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.audio,
-      Permission.storage,
-      Permission.notification,
-    ].request();
-
-    bool granted =
-        (statuses[Permission.audio]!.isGranted ||
-        statuses[Permission.storage]!.isGranted);
-
-    if (mounted) {
-      if (granted) {
-        await context.read<AudioProvider>().loadLibrary();
-        setState(() {
-          _permissionsGranted = true;
-          _isLoading = false;
-        });
-        _checkTutorialStatus();
-      } else {
-        setState(() {
-          _permissionsGranted = false;
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (!_permissionsGranted) {
-      return _buildPermissionErrorScreen();
-    }
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return LayoutBuilder(
@@ -2051,33 +1956,30 @@ class _HomeScreenState extends State<HomeScreen>
         final bool isLandscape = constraints.maxWidth > constraints.maxHeight;
 
         return Scaffold(
+          // ✅ DRAWER: ACTIVO SIEMPRE (Móvil y Tablet)
           drawer: const MainDrawer(),
+
           appBar: _buildAppBar(context, isDark, isTablet, isLandscape),
+
           body: Row(
             children: [
-              if (isTablet && !_isSearching)
-                _buildNavigationRail(isDark, constraints, isLandscape),
+              // ✅ SIDEBAR: ACTIVO SOLO EN TABLET
+              if (isTablet) _buildCustomSidebar(isDark),
+
               Expanded(
                 child: _isSearching && _query.isNotEmpty
                     ? SearchResultsWidget(
                         query: _query,
                         audio: context.read<AudioProvider>(),
                       )
-                    // ✅ AQUÍ ESTÁ EL CAMBIO: CustomScrollView para efecto Silver
-                    : CustomScrollView(
-                        slivers: [
-                          SliverFillRemaining(
-                            child: TabBarView(
-                              controller: _tabController,
-                              physics: isTablet
-                                  ? const NeverScrollableScrollPhysics()
-                                  : const BouncingScrollPhysics(),
-                              children: _navItems
-                                  .map<Widget>((item) => item['widget'])
-                                  .toList(),
-                            ),
-                          ),
-                        ],
+                    : TabBarView(
+                        controller: _tabController,
+                        physics: isTablet
+                            ? const NeverScrollableScrollPhysics()
+                            : const BouncingScrollPhysics(),
+                        children: _navItems
+                            .map<Widget>((item) => item['widget'])
+                            .toList(),
                       ),
               ),
             ],
@@ -2088,140 +1990,49 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildPermissionErrorScreen() {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.music_off_outlined,
-                  size: 80,
-                  color: Colors.orangeAccent,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "Sin acceso a la música",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Debes permitir el acceso a tus archivos para que PZ Player pueda reproducir tus canciones.",
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _initAppPermissions,
-                  child: const Text("INTENTAR DE NUEVO"),
-                ),
-              ],
-            ),
+  // ✅ SIDEBAR PERSONALIZADO (Solo Iconos en Tablet)
+  Widget _buildCustomSidebar(bool isDark) {
+    const double sidebarWidth = 80.0;
+
+    return Container(
+      width: sidebarWidth,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black12 : Colors.grey[100],
+        border: Border(
+          right: BorderSide(
+            color: isDark ? Colors.white10 : Colors.black12,
+            width: 1,
           ),
         ),
       ),
-    );
-  }
-
-  // 👇 MENÚ LATERAL ADAPTATIVO (CORREGIDO)
-  Widget _buildNavigationRail(
-    bool isDark,
-    BoxConstraints landscapeConstraints,
-    bool isLandscape,
-  ) {
-    final bool useListView =
-        isLandscape ||
-        (landscapeConstraints.maxWidth > 600 &&
-            landscapeConstraints.maxWidth <= 900);
-
-    if (!useListView) {
-      return SizedBox(
-        width: 400,
-        child: NavigationRail(
-          backgroundColor: Colors.transparent,
-          extended: true,
-          selectedIndex: _selectedIndex,
-          // ✅ CORRECCIÓN: Usamos un color sólido (white70) en lugar de uno muy transparente
-          selectedLabelTextStyle: TextStyle(
-            color: isDark ? Colors.white70 : Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-          unselectedLabelTextStyle: TextStyle(
-            // ✅ Aquí también mejoramos un poco el contraste
-            color: isDark ? Colors.white60 : Colors.black54,
-            fontSize: 13,
-          ),
-          selectedIconTheme: IconThemeData(
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          onDestinationSelected: (index) {
-            setState(() => _selectedIndex = index);
-            _tabController.animateTo(index);
-          },
-          destinations: _navItems
-              .map(
-                (item) => NavigationRailDestination(
-                  icon: Icon(item['icon']),
-                  label: Text(item['label']),
-                ),
-              )
-              .toList(),
-        ),
-      );
-    }
-
-    return SizedBox(
-      width: isLandscape ? 56 : 65,
       child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        children: _buildNavigationListView(context, isDark, isLandscape),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        children: _navItems.map((item) {
+          int index = _navItems.indexOf(item);
+          bool isSelected = _selectedIndex == index;
+
+          final Color itemColor = isSelected
+              ? (isDark ? Colors.white : Colors.black)
+              : (isDark ? Colors.white54 : Colors.black54);
+
+          return InkWell(
+            onTap: () {
+              setState(() {
+                _selectedIndex = index;
+              });
+              _tabController.animateTo(index);
+            },
+            child: Container(
+              color: isSelected
+                  ? (isDark ? Colors.white10 : Colors.black.withOpacity(0.05))
+                  : Colors.transparent,
+              height: 80,
+              child: Icon(item['icon'], color: itemColor, size: 62),
+            ),
+          );
+        }).toList(),
       ),
     );
-  }
-
-  List<Widget> _buildNavigationListView(
-    BuildContext context,
-    bool isDark,
-    bool isLandscape,
-  ) {
-    return _navItems.map((item) {
-      int index = _navItems.indexOf(item);
-      bool isSelected = _selectedIndex == index;
-
-      final color = isSelected
-          ? (isDark ? Colors.blueGrey : AppColors.primary)
-          : (isDark ? Colors.white38 : Colors.black54);
-
-      return ListTile(
-        dense: true,
-        selected: isSelected,
-        selectedColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: isLandscape
-            ? null
-            : Text(
-                item['label'],
-                style: TextStyle(
-                  color: color,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 10,
-                ),
-              ),
-        leading: Icon(item['icon'], color: color, size: 22),
-        onTap: () {
-          setState(() {
-            if (_selectedIndex != index) {
-              _selectedIndex = index;
-              _tabController.animateTo(index);
-            }
-          });
-        },
-      );
-    }).toList();
   }
 
   PreferredSizeWidget _buildAppBar(
@@ -2230,9 +2041,11 @@ class _HomeScreenState extends State<HomeScreen>
     bool isTablet,
     bool isLandscape,
   ) {
+    // Ocultar título solo en móvil apaisado
     final bool hideTitle = (!isTablet && isLandscape);
 
     return AppBar(
+      // ✅ LEADING: ACTIVO SIEMPRE (Para abrir el Drawer en cualquier dispositivo)
       leading: Builder(
         builder: (context) => IconButton(
           icon: Icon(_isSearching ? Icons.music_note : Icons.menu),
@@ -2265,8 +2078,9 @@ class _HomeScreenState extends State<HomeScreen>
           }),
         ),
       ],
-      bottom: (!isTablet && !_isSearching)
-          ? TabBar(
+      bottom: isTablet
+          ? null
+          : TabBar(
               controller: _tabController,
               isScrollable: true,
               indicatorColor: isDark ? Colors.white : Colors.black,
@@ -2274,8 +2088,7 @@ class _HomeScreenState extends State<HomeScreen>
               unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
               labelStyle: TextStyle(fontSize: isLandscape ? 12 : 14),
               tabs: _navItems.map((item) => Tab(text: item['label'])).toList(),
-            )
-          : null,
+            ),
     );
   }
 
@@ -2294,7 +2107,6 @@ class _TutorialStepDialog extends StatelessWidget {
   final bool isLast;
 
   const _TutorialStepDialog({
-    super.key,
     required this.step,
     required this.currentStep,
     required this.totalSteps,
@@ -2303,8 +2115,12 @@ class _TutorialStepDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Dialog(
+      // ✅ Dark Mode: Fondo adaptativo al tema de la app
+      backgroundColor: theme.dialogBackgroundColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -2315,28 +2131,51 @@ class _TutorialStepDialog extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               "${step['title']} ($currentStep/$totalSteps)",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // ✅ Estilo: Usa el título grande del tema
+              style:
+                  theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ) ??
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
               step['desc'],
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: isDark ? Colors.white70 : Colors.black87,
-              ),
+              // ✅ Dark Mode: Color de texto adaptativo
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ) ??
+                  TextStyle(
+                    fontSize: 15,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
             ),
             const SizedBox(height: 25),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Botón Omitir
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text("Omitir"),
+                  child: Text(
+                    "Omitir",
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
                 ),
+                // Botón Siguiente / Finalizar
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
+                    // ✅ Estilo: Asegura que el texto sea blanco siempre
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(context, true),
                   child: Text(isLast ? "Finalizar" : "Siguiente"),

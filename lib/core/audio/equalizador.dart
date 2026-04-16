@@ -269,7 +269,7 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                     print("🎚️ [EQ UI] Switch Ecualizador: $value");
                     context.read<AudioProvider>().toggleEqualizer(value);
                   },
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   activeTrackColor: AppColors.primary.withOpacity(0.3),
                 ),
               ),
