@@ -65,8 +65,61 @@ flutter pub get
 flutter run
 
 
-🛠️ Stack Tecnológico
 
+# 🚀 PZ Player: Atmosphere Edition 2026
+
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+
+> **"La música no solo se escucha, se siente."** > PZ Player transforma la interacción con tu biblioteca local mediante una experiencia inmersiva, motivacional y de alto rendimiento técnico.
+
+---
+
+## 🆕 Novedades de la Versión 2026
+
+### 🎥 Nuevo "Modo Atmósfera" (Env Mode)
+Hemos llevado la estética al siguiente nivel integrando fondos de video dinámicos sin comprometer la fluidez del sistema.
+* **Video de Fondo Hi-Fi:** Soporte para fondos inmersivos de alta calidad.
+* **Pre-caching Engine:** Sistema de carga anticipada que garantiza que el video esté listo desde el primer segundo, eliminando pantallas negras.
+* **Minimalist UI:** Una interfaz limpia que prioriza el movimiento y la armonía visual.
+
+### 🎙️ Asistente de Motivación IA (TTS Engine)
+El reproductor ahora es tu compañero de entrenamiento y concentración.
+* **Palabras Inspiradoras:** Al cambiar de pista en el *Modo Atmósfera*, el motor TTS genera frases audibles para elevar tu energía.
+* **Audio Mixing:** Integración fluida que sincroniza la voz con la música sin interrumpir la reproducción.
+
+### 🛠️ Gestión Avanzada de Biblioteca
+Diseñado para quienes aman tener el control total de sus archivos.
+* **Búsqueda Inteligente:** Panel de resultados dinámico accesible desde la pantalla principal para encontrar pistas, álbumes o artistas al instante.
+* **Technical Insights para Audiófilos:** Visualización de metadatos profundos:
+    * Formato de archivo (`MP3`, `FLAC`, `WAV`, `AAC`).
+    * Tamaño exacto en MB.
+    * Ruta física (Path) del archivo en el dispositivo.
+* **Smart Playlists:** Organización optimizada con soporte nativo para temas Claro y Oscuro.
+
+### ⚡ Ingeniería, Optimización y Estabilidad
+Bajo el capó, hemos reconstruido el núcleo para una experiencia libre de errores.
+* **Zero Memory Leaks:** Reestructuración completa del ciclo de vida de los controladores (`dispose()`), eliminando fugas de memoria.
+* **Consola Limpia:** Optimización de *listeners* de audio para eliminar errores de contexto y logs innecesarios.
+* **Interfaz Pulida:** Eliminación de *paddings* fantasmales y optimización del espacio en paneles de pestañas (Álbumes, Artistas, Carpetas, Géneros).
+
+---
+
+## 🛠️ Stack Tecnológico
+* **Frontend:** Flutter & Dart.
+* **Audio Core:** `just_audio` / `audio_service`.
+* **Video Engine:** `video_player` con optimización de mezcla de audio.
+* **Persistence:** `shared_preferences`.
+* **Metadata:** `on_audio_query`.
+
+---
+
+## 📱 Optimización de Hardware
+Especialmente optimizado para dispositivos de alto rendimiento (Probado en **vivo Y38 5G**), garantizando que el renderizado de video pesado y el procesamiento de voz ocurran de forma paralela y fluida.
+
+---
+Desarrollado con ❤️ por **PZ PLATINUM**
 Herramienta
 
 Función
