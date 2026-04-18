@@ -120,7 +120,7 @@
 import 'dart:typed_data';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart'; // 🔑 Necesario para queryArtwork
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:pzplayer/core/audio/audio_provider.dart';
 import 'package:pzplayer/ui/widgets/artista_detalle.dart';
@@ -129,7 +129,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
 class ArtistScreen extends StatelessWidget {
-  // 🔑 Mantengo los parámetros que pediste
   final String? artistName;
   final List<MediaItem>? songs;
 
@@ -137,24 +136,43 @@ class ArtistScreen extends StatelessWidget {
 
   Widget _buildPlaceholder(bool isDark) {
     return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: isDark
-          ? Colors.white.withOpacity(0.05)
-          : Colors.black.withOpacity(0.05),
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.05),
+        shape: BoxShape.circle,
+      ),
       child: Icon(
         Icons.person,
-        size: 80,
+        size: 24,
         color: isDark ? Colors.blueGrey : AppColors.primary,
       ),
     );
+  }
+
+  // ✅ MÉTODO ROBUSTO PARA CARGAR IMAGEN
+  Future<Uint8List?> _fetchArtistArt(int songId) async {
+    final audioQuery = OnAudioQuery();
+    if (songId > 0) {
+      try {
+        final art = await audioQuery.queryArtwork(
+          songId,
+          ArtworkType.AUDIO,
+          format: ArtworkFormat.JPEG,
+          size: 500,
+        );
+        if (art != null && art.isNotEmpty) return art;
+      } catch (e) {}
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final artists = context.watch<AudioProvider>().artists;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final width = MediaQuery.of(context).size.width;
 
     if (artists.isEmpty) {
       return Center(
@@ -166,28 +184,23 @@ class ArtistScreen extends StatelessWidget {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
+    // ✅ CAMBIO A LISTVIEW
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       physics: const BouncingScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: width > 600 ? 5 : 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
       itemCount: artists.length,
+      itemExtent: 72.0,
       itemBuilder: (context, index) {
         final currentArtistName = artists.keys.elementAt(index);
         final currentSongs = artists.values.elementAt(index);
 
-        // 🔑 Obtenemos el ID desde los extras del Provider corregido
         final firstSong = currentSongs.isNotEmpty ? currentSongs.first : null;
         final dynamic rawId = firstSong?.extras?['dbId'];
         final int songId = (rawId is int)
             ? rawId
             : int.tryParse(rawId?.toString() ?? '0') ?? 0;
 
-        return GestureDetector(
+        return ListTile(
           onTap: () {
             Navigator.push(
               context,
@@ -199,64 +212,42 @@ class ArtistScreen extends StatelessWidget {
               ),
             );
           },
-          child: Card(
-            elevation: 3,
-            shadowColor: isDark ? Colors.blueGrey : AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: songId == 0
-                      ? _buildPlaceholder(isDark)
-                      : FutureBuilder<Uint8List?>(
-                          future: OnAudioQuery().queryArtwork(
-                            songId,
-                            ArtworkType.AUDIO,
-                            format: ArtworkFormat.JPEG,
-                            size: 400,
-                          ),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData &&
-                                snapshot.data != null &&
-                                snapshot.data!.isNotEmpty) {
-                              return Image.memory(
-                                snapshot.data!,
-                                fit: BoxFit.cover,
-                              );
-                            }
-                            return _buildPlaceholder(isDark);
-                          },
-                        ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    currentArtistName,
-                    style: isDark
-                        ? AppTextStyles.bodyDark
-                        : AppTextStyles.bodyLight,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          leading: songId == 0
+              ? _buildPlaceholder(isDark)
+              : ClipOval(
+                  child: FutureBuilder<Uint8List?>(
+                    future: _fetchArtistArt(songId),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData &&
+                          snapshot.data != null &&
+                          snapshot.data!.isNotEmpty) {
+                        return Image.memory(
+                          snapshot.data!,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        );
+                      }
+                      return _buildPlaceholder(isDark);
+                    },
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 4.0,
-                  ),
-                  child: Text(
-                    "${currentSongs.length} canciones",
-                    style: isDark
-                        ? AppTextStyles.captionDark
-                        : AppTextStyles.captionLight,
-                  ),
-                ),
-              ],
-            ),
+          title: Text(
+            currentArtistName,
+            style: isDark ? AppTextStyles.bodyDark : AppTextStyles.bodyLight,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            "${currentSongs.length} canciones",
+            style: isDark
+                ? AppTextStyles.captionDark
+                : AppTextStyles.captionLight,
+          ),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white24 : Colors.black26,
+            size: 20,
           ),
         );
       },

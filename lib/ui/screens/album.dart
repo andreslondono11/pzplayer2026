@@ -77,7 +77,10 @@ class AlbumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final albums = context.watch<AudioProvider>().albums;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final width = MediaQuery.of(context).size.width;
+
+    // ✅ DETECTAMOS ORIENTACIÓN
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     if (albums.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -86,12 +89,20 @@ class AlbumScreen extends StatelessWidget {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
       physics: const BouncingScrollPhysics(),
+
+      // ✅ AJUSTE RESPONSIVE CUADROS
+      // Portrait: 2 columnas (estándar)
+      // Landscape: 6 columnas (muchos cuadros pequeños para ver más álbumes)
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: width > 600 ? 5 : 2,
+        crossAxisCount: isLandscape ? 6 : 2,
+
+        // Mantenemos la proporción 0.8 para que se vean cuadrados
         childAspectRatio: 0.8,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+
+        crossAxisSpacing: 8, // Reducimos un poco el espacio en landscape
+        mainAxisSpacing: 8,
       ),
+
       itemCount: albums.length,
       itemBuilder: (context, index) {
         final currentAlbumName = albums.keys.elementAt(index);
@@ -111,12 +122,6 @@ class AlbumScreen extends StatelessWidget {
             ? rawSongId
             : int.tryParse(rawSongId?.toString() ?? '0') ?? 0;
 
-        // 🕵️ MODO DIAGNÓSTICO (Conserva esto para verificar los IDs)
-        // print('--- DIAGNÓSTICO ALBUM ---');
-        // print('Álbum: $currentAlbumName');
-        // print('AlbumID: $albumId | SongID: $songId');
-        // print('-------------------------');
-
         return GestureDetector(
           onTap: () => Navigator.push(
             context,
@@ -133,14 +138,15 @@ class AlbumScreen extends StatelessWidget {
               color: isDark
                   ? Colors.white.withOpacity(0.05)
                   : Colors.black.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(
+                12,
+              ), // Radio un poco menor para caber más
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
                   child: FutureBuilder<Uint8List?>(
-                    // ✅ USAMOS EL NUEVO MÉTODO DE RESPALDO
                     future: _fetchAlbumArt(albumId, songId),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.done &&
@@ -150,18 +156,18 @@ class AlbumScreen extends StatelessWidget {
                         return Image.memory(
                           snapshot.data!,
                           fit: BoxFit.cover,
-                          gaplessPlayback: true, // Evita parpadeos al redibujar
+                          gaplessPlayback: true,
                           errorBuilder: (_, __, ___) =>
                               _buildPlaceholder(isDark),
                         );
                       }
-                      // Mientras carga o si falla
                       return _buildPlaceholder(isDark);
                     },
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(10),
+                  // Reducimos el padding en landscape para aprovechar espacio
+                  padding: EdgeInsets.all(isLandscape ? 6 : 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -171,15 +177,21 @@ class AlbumScreen extends StatelessWidget {
                             (isDark
                                     ? AppTextStyles.bodyDark
                                     : AppTextStyles.bodyLight)
-                                .copyWith(fontWeight: FontWeight.bold),
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  // Fuente un poco más pequeña en landscape
+                                  fontSize: isLandscape ? 11 : null,
+                                ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         "${currentSongs.length} canciones",
-                        style: isDark
-                            ? AppTextStyles.captionDark
-                            : AppTextStyles.captionLight,
+                        style:
+                            (isDark
+                                    ? AppTextStyles.captionDark
+                                    : AppTextStyles.captionLight)
+                                .copyWith(fontSize: isLandscape ? 9 : null),
                       ),
                     ],
                   ),

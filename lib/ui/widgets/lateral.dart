@@ -276,7 +276,7 @@ class MainDrawer extends StatelessWidget {
             const Icon(Icons.music_note, size: 50, color: AppColors.primary),
             const SizedBox(height: 15),
             const Text(
-              "Versión: 13.28.0+13",
+              "Versión: 14.29.35+14",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const Text("Build: 2026.03.21"),
@@ -506,7 +506,7 @@ class MainDrawer extends StatelessWidget {
                     showAboutDialog(
                       context: context,
                       applicationName: "PZ Player",
-                      applicationVersion: "13.28.0+13",
+                      applicationVersion: "14.29.35+14",
                       applicationIcon: Icon(
                         Icons.play_circle_fill,
                         size: 45,

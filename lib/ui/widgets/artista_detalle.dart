@@ -1,29 +1,56 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 import 'package:pzplayer/core/audio/audio_provider.dart';
+import 'package:pzplayer/core/theme/app_colors.dart';
+import 'package:pzplayer/core/theme/app_text_styles.dart';
 import 'package:pzplayer/ui/widgets/album_detalle.dart';
 import 'package:pzplayer/ui/widgets/favorite.dart';
 import 'package:pzplayer/ui/widgets/player_controls.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
 import 'genre_detalle.dart';
 
 class ArtistDetailScreen extends StatelessWidget {
   final String artistName;
-  final List<MediaItem> songs;
+  final List<MediaItem>? songs;
 
-  const ArtistDetailScreen({
-    super.key,
-    required this.artistName,
-    required this.songs,
-  });
+  const ArtistDetailScreen({super.key, required this.artistName, this.songs});
 
   Uint8List? _parseCover(dynamic raw) {
     if (raw is Uint8List) return raw;
     if (raw is List<int>) return Uint8List.fromList(raw);
     if (raw is List<dynamic>) return Uint8List.fromList(List<int>.from(raw));
+    return null;
+  }
+
+  // ✅ MÉTODO ROBUSTO PARA CARGAR IMAGEN DE ÁLBUM
+  Future<Uint8List?> _fetchAlbumArt(int albumId, int songId) async {
+    final audioQuery = OnAudioQuery();
+
+    if (albumId > 0) {
+      try {
+        final art = await audioQuery.queryArtwork(
+          albumId,
+          ArtworkType.ALBUM,
+          format: ArtworkFormat.JPEG,
+          size: 500,
+        );
+        if (art != null && art.isNotEmpty) return art;
+      } catch (e) {}
+    }
+
+    if (songId > 0) {
+      try {
+        final art = await audioQuery.queryArtwork(
+          songId,
+          ArtworkType.AUDIO,
+          format: ArtworkFormat.JPEG,
+          size: 500,
+        );
+        if (art != null && art.isNotEmpty) return art;
+      } catch (e) {}
+    }
     return null;
   }
 
@@ -34,13 +61,13 @@ class ArtistDetailScreen extends StatelessWidget {
     final bool isFav = audio.isSongFavorite(song);
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // PERMITE SUPERAR EL 50% DE LA PANTALLA
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return DraggableScrollableSheet(
-          initialChildSize: 0.6, // Abre al 60%
-          minChildSize: 0.4, // Mínimo 40%
-          maxChildSize: 0.95, // Casi pantalla completa en Landscape
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
           expand: false,
           builder: (_, scrollController) {
             return LayoutBuilder(
@@ -61,12 +88,10 @@ class ArtistDetailScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       const SizedBox(height: 12),
-                      // Indicador visual de arrastre
                       Container(
                         width: 45,
                         height: 5,
                         decoration: BoxDecoration(
-                          // ignore: deprecated_member_use
                           color: Colors.grey.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -74,7 +99,6 @@ class ArtistDetailScreen extends StatelessWidget {
                       const SizedBox(height: 15),
                       Expanded(
                         child: ListView(
-                          // VINCULAMOS EL CONTROLADOR PARA QUE EL SCROLL FUNCIONE
                           controller: scrollController,
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.only(bottom: 30),
@@ -84,7 +108,6 @@ class ArtistDetailScreen extends StatelessWidget {
                               "Reproducir ahora",
                               () {
                                 Navigator.pop(context);
-                                // ✅ REGISTRO AÑADIDO AQUÍ
                                 audio.registrarReproduccionUniversal(song);
                                 audio.playItems([song]);
                               },
@@ -101,7 +124,6 @@ class ArtistDetailScreen extends StatelessWidget {
                               isDark,
                               isLandscape,
                             ),
-
                             _menuTile(
                               isFav ? Icons.favorite : Icons.favorite_border,
                               isFav
@@ -109,15 +131,11 @@ class ArtistDetailScreen extends StatelessWidget {
                                   : "Añadir a favoritos",
                               () {
                                 audio.toggleFavoriteSong(song);
-                                // Si tu _menuTile está dentro de un StatefulWidget,
-                                // probablemente necesites llamar a setState(() {}) aquí
-                                // para que el icono cambie visualmente antes de cerrar.
                                 Navigator.pop(context);
                               },
                               isDark,
                               isLandscape,
                             ),
-
                             _menuTile(
                               Icons.favorite,
                               "Ir a favoritos",
@@ -133,7 +151,6 @@ class ArtistDetailScreen extends StatelessWidget {
                               isDark,
                               isLandscape,
                             ),
-
                             _menuTile(
                               Icons.queue_music,
                               "Añadir a la cola",
@@ -294,12 +311,29 @@ class ArtistDetailScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final audio = Provider.of<AudioProvider>(context);
 
-    final Map<String, List<MediaItem>> albumsMap = {};
-    for (var song in songs) {
-      final album = song.album ?? 'Desconocido';
-      albumsMap.putIfAbsent(album, () => []).add(song);
+    // ✅ OBTENCIÓN DE CANCIONES CORREGIDA
+    // Si no se pasan canciones, filtramos por nombre de artista
+    List<MediaItem> songsList = [];
+    if (songs != null && songs!.isNotEmpty) {
+      songsList = songs!;
+    } else {
+      songsList = audio.items
+          .where((item) => item.artist == artistName)
+          .toList();
     }
-    final firstSong = songs.isNotEmpty ? songs.first : null;
+
+    // ✅ AGRUPACIÓN DE ÁLBUMES CORREGIDA
+    final Map<String, List<MediaItem>> albumsMap = {};
+    for (var song in songsList) {
+      final album = song.album ?? 'Desconocido';
+      // CORRECCIÓN: Usamos [] en lugar de () para la lista inicial
+      if (!albumsMap.containsKey(album)) {
+        albumsMap[album] = [];
+      }
+      albumsMap[album]!.add(song);
+    }
+
+    final firstSong = songsList.isNotEmpty ? songsList.first : null;
     final Uint8List? artistCover = _parseCover(
       firstSong?.extras?['coverBytes'],
     );
@@ -307,20 +341,18 @@ class ArtistDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          // artistName,
-          'Album del Artista',
+          'Album del Artista', // Mantenido tu título
           style: isDark
               ? AppTextStyles.headingDark
               : AppTextStyles.headingLight,
         ),
-        // ✅ NUEVO: Botón para reproducir todo el artista
         actions: [
-          if (songs.isNotEmpty)
+          if (songsList.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.play_circle_outline),
               onPressed: () {
-                audio.registrarReproduccionUniversal(songs.first);
-                audio.playItems(songs);
+                audio.registrarReproduccionUniversal(songsList.first);
+                audio.playItems(songsList);
               },
             ),
         ],
@@ -356,7 +388,7 @@ class ArtistDetailScreen extends StatelessWidget {
                               : AppTextStyles.subheadingLight,
                         ),
                         Text(
-                          "${albumsMap.length} álbumes • ${songs.length} canciones",
+                          "${albumsMap.length} álbumes • ${songsList.length} canciones",
                           style: AppTextStyles.captionDark,
                         ),
                       ],
@@ -369,9 +401,25 @@ class ArtistDetailScreen extends StatelessWidget {
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final albumName = albumsMap.keys.elementAt(index);
                       final albumSongs = albumsMap.values.elementAt(index);
-                      final Uint8List? albumImg = _parseCover(
-                        albumSongs.first.extras?['coverBytes'],
+
+                      // ✅ USO DEL MÉTODO ROBUSTO PARA IMAGEN
+                      final firstAlbumSong = albumSongs.isNotEmpty
+                          ? albumSongs.first
+                          : null;
+                      final Uint8List? albumImgFromCache = _parseCover(
+                        firstAlbumSong?.extras?['coverBytes'],
                       );
+
+                      // Intentamos obtener IDs para buscar si no hay caché
+                      final dynamic rawAlbumId =
+                          firstAlbumSong?.extras?['albumId'];
+                      final dynamic rawSongId = firstAlbumSong?.extras?['dbId'];
+                      final int albumId = (rawAlbumId is int)
+                          ? rawAlbumId
+                          : int.tryParse(rawAlbumId?.toString() ?? '0') ?? 0;
+                      final int songId = (rawSongId is int)
+                          ? rawSongId
+                          : int.tryParse(rawSongId?.toString() ?? '0') ?? 0;
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -387,14 +435,29 @@ class ArtistDetailScreen extends StatelessWidget {
                         child: ListTile(
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: albumImg != null
+                            child: albumImgFromCache != null
                                 ? Image.memory(
-                                    albumImg,
+                                    albumImgFromCache,
                                     width: 50,
                                     height: 50,
                                     fit: BoxFit.cover,
                                   )
-                                : const Icon(Icons.album, size: 40),
+                                : FutureBuilder<Uint8List?>(
+                                    future: _fetchAlbumArt(albumId, songId),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData &&
+                                          snapshot.data != null &&
+                                          snapshot.data!.isNotEmpty) {
+                                        return Image.memory(
+                                          snapshot.data!,
+                                          width: 50,
+                                          height: 50,
+                                          fit: BoxFit.cover,
+                                        );
+                                      }
+                                      return const Icon(Icons.album, size: 40);
+                                    },
+                                  ),
                           ),
                           title: Text(
                             albumName,
@@ -404,7 +467,6 @@ class ArtistDetailScreen extends StatelessWidget {
                           subtitle: Text("${albumSongs.length} canciones"),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () {
-                            // ✅ REGISTRO AL ENTRAR AL ÁLBUM DESDE EL ARTISTA
                             audio.registrarReproduccionUniversal(
                               albumSongs.first,
                             );

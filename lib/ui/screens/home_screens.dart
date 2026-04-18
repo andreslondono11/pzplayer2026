@@ -1799,8 +1799,398 @@
 //   }
 // }
 
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 
+// import 'package:provider/provider.dart';
+// import 'package:pzplayer/core/audio/audio_provider.dart';
+
+// // Importaciones de tu proyecto
+// import 'package:pzplayer/ui/screens/album.dart';
+// import 'package:pzplayer/ui/screens/artista.dart';
+// import 'package:pzplayer/ui/screens/folder.dart';
+// import 'package:pzplayer/ui/screens/genre.dart';
+// import 'package:pzplayer/ui/screens/library.dart';
+// import 'package:pzplayer/ui/screens/playlist.dart';
+
+// import 'package:pzplayer/ui/widgets/lateral.dart'; // MainDrawer
+// import 'package:pzplayer/ui/widgets/player_controls.dart';
+// import 'package:pzplayer/ui/widgets/utilidades.dart';
+
+// import 'package:shared_preferences/shared_preferences.dart';
+
+// class HomeScreen extends StatefulWidget {
+//   const HomeScreen({super.key});
+
+//   @override
+//   State<HomeScreen> createState() => _HomeScreenState();
+// }
+
+// class _HomeScreenState extends State<HomeScreen>
+//     with SingleTickerProviderStateMixin {
+//   late TabController _tabController;
+//   final TextEditingController _searchController = TextEditingController();
+//   String _query = "";
+//   bool _isSearching = false;
+//   int _selectedIndex = 0;
+
+//   // ESTADOS DE CONTROL
+//   // Ya no necesitamos _permissionsGranted ni _isLoading para permisos aquí
+//   // Solo necesitamos verificar si ya cargamos la biblioteca una vez si lo deseas,
+//   // pero asumiremos que el Provider maneja el estado.
+
+//   final List<Map<String, dynamic>> _navItems = [
+//     {
+//       'label': "Biblioteca",
+//       'icon': Icons.library_music,
+//       'widget': const LibraryScreen(),
+//     },
+//     {
+//       'label': "Álbum",
+//       'icon': Icons.album,
+//       'widget': const AlbumScreen(albumName: '', songs: []),
+//     },
+//     {
+//       'label': "Artista",
+//       'icon': Icons.person,
+//       'widget': const ArtistScreen(artistName: '', songs: []),
+//     },
+//     {
+//       'label': "Género",
+//       'icon': Icons.style,
+//       'widget': GenreScreen(genreName: '', songs: []),
+//     },
+//     {
+//       'label': "Playlist",
+//       'icon': Icons.playlist_play,
+//       'widget': const PlaylistScreen(playlistName: '', songs: []),
+//     },
+//     {
+//       'label': "Carpeta",
+//       'icon': Icons.folder,
+//       'widget': const FolderScreen(folderName: '', songs: []),
+//     },
+//   ];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _tabController = TabController(length: _navItems.length, vsync: this);
+//     _tabController.addListener(() {
+//       if (!_tabController.indexIsChanging) {
+//         setState(() => _selectedIndex = _tabController.index);
+//       }
+//     });
+
+//     // Al iniciar, verificamos el tutorial.
+//     // La carga de datos del AudioProvider debería ocurrir en IntroScreen o al
+//     // acceder al provider por primera vez, pero si necesitas asegurarte aquí:
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _checkTutorialStatus();
+//     });
+//   }
+
+//   Future<void> _checkTutorialStatus() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     bool seen = prefs.getBool('tutorial_seen') ?? false;
+
+//     // Solo mostrar tutorial si es la primera vez
+//     if (!seen) {
+//       // Pequeño delay para que la pantalla cargue suavemente
+//       await Future.delayed(const Duration(milliseconds: 500));
+//       if (mounted) {
+//         _showTutorialSteps().then((_) {
+//           prefs.setBool('tutorial_seen', true);
+//         });
+//       }
+//     }
+//   }
+
+//   Future<void> _showTutorialSteps() async {
+//     final steps = [
+//       {
+//         "icon": Icons.menu,
+//         "title": "Navegación",
+//         "desc":
+//             "Desliza el dedo o usa el menú lateral para cambiar entre Biblioteca, Álbumes, Artistas, etc.",
+//       },
+//       {
+//         "icon": Icons.play_circle_fill,
+//         "title": "Reproducción",
+//         "desc":
+//             "Toca cualquier canción para reproducirla. Usa el menú (tres puntos) para añadir a la cola o ver detalles.",
+//       },
+//       {
+//         "icon": Icons.headphones,
+//         "title": "Mini-Reproductor",
+//         "desc":
+//             "Cuando suena música, toca la barra inferior para abrir el reproductor completo y el ecualizador.",
+//       },
+//     ];
+
+//     for (int i = 0; i < steps.length; i++) {
+//       if (!mounted) return;
+//       bool shouldContinue =
+//           await showDialog<bool>(
+//             context: context,
+//             barrierDismissible: false,
+//             builder: (context) => _TutorialStepDialog(
+//               step: steps[i],
+//               currentStep: i + 1,
+//               totalSteps: steps.length,
+//               isLast: i == steps.length - 1,
+//             ),
+//           ) ??
+//           false;
+
+//       if (!shouldContinue) break;
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+//     return LayoutBuilder(
+//       builder: (context, constraints) {
+//         final bool isTablet = constraints.maxWidth > 600;
+//         final bool isLandscape = constraints.maxWidth > constraints.maxHeight;
+
+//         return Scaffold(
+//           // ✅ DRAWER: ACTIVO SIEMPRE (Móvil y Tablet)
+//           drawer: const MainDrawer(),
+
+//           appBar: _buildAppBar(context, isDark, isTablet, isLandscape),
+
+//           body: Row(
+//             children: [
+//               // ✅ SIDEBAR: ACTIVO SOLO EN TABLET
+//               if (isTablet) _buildCustomSidebar(isDark),
+
+//               Expanded(
+//                 child: _isSearching && _query.isNotEmpty
+//                     ? SearchResultsWidget(
+//                         query: _query,
+//                         audio: context.read<AudioProvider>(),
+//                       )
+//                     : TabBarView(
+//                         controller: _tabController,
+//                         physics: isTablet
+//                             ? const NeverScrollableScrollPhysics()
+//                             : const BouncingScrollPhysics(),
+//                         children: _navItems
+//                             .map<Widget>((item) => item['widget'])
+//                             .toList(),
+//                       ),
+//               ),
+//             ],
+//           ),
+//           bottomNavigationBar: MiniPlayer(),
+//         );
+//       },
+//     );
+//   }
+
+//   // ✅ SIDEBAR PERSONALIZADO (Solo Iconos en Tablet)
+//   Widget _buildCustomSidebar(bool isDark) {
+//     const double sidebarWidth = 80.0;
+
+//     return Container(
+//       width: sidebarWidth,
+//       decoration: BoxDecoration(
+//         color: isDark ? Colors.black12 : Colors.grey[100],
+//         border: Border(
+//           right: BorderSide(
+//             color: isDark ? Colors.white10 : Colors.black12,
+//             width: 1,
+//           ),
+//         ),
+//       ),
+//       child: ListView(
+//         padding: const EdgeInsets.symmetric(vertical: 20),
+//         children: _navItems.map((item) {
+//           int index = _navItems.indexOf(item);
+//           bool isSelected = _selectedIndex == index;
+
+//           final Color itemColor = isSelected
+//               ? (isDark ? Colors.white : Colors.black)
+//               : (isDark ? Colors.white54 : Colors.black54);
+
+//           return InkWell(
+//             onTap: () {
+//               setState(() {
+//                 _selectedIndex = index;
+//               });
+//               _tabController.animateTo(index);
+//             },
+//             child: Container(
+//               color: isSelected
+//                   ? (isDark ? Colors.white10 : Colors.black.withOpacity(0.05))
+//                   : Colors.transparent,
+//               height: 80,
+//               child: Icon(item['icon'], color: itemColor, size: 62),
+//             ),
+//           );
+//         }).toList(),
+//       ),
+//     );
+//   }
+
+//   PreferredSizeWidget _buildAppBar(
+//     BuildContext context,
+//     bool isDark,
+//     bool isTablet,
+//     bool isLandscape,
+//   ) {
+//     // Ocultar título solo en móvil apaisado
+//     final bool hideTitle = (!isTablet && isLandscape);
+
+//     return AppBar(
+//       elevation: 0,
+//       // ✅ LEADING: ACTIVO SIEMPRE (Para abrir el Drawer en cualquier dispositivo)
+//       leading: Builder(
+//         builder: (context) => IconButton(
+//           icon: Icon(_isSearching ? Icons.music_note : Icons.menu),
+//           onPressed: () =>
+//               _isSearching ? null : Scaffold.of(context).openDrawer(),
+//         ),
+//       ),
+//       title: _isSearching
+//           ? TextField(
+//               autofocus: true,
+//               onChanged: (val) => setState(() => _query = val),
+//               style: TextStyle(color: isDark ? Colors.white : Colors.black),
+//               decoration: InputDecoration(
+//                 hintText: "Buscar...",
+//                 hintStyle: TextStyle(
+//                   color: isDark ? Colors.white54 : Colors.black54,
+//                 ),
+//                 border: InputBorder.none,
+//               ),
+//             )
+//           : hideTitle
+//           ? null
+//           : const Text("PZ Player"),
+//       actions: [
+//         IconButton(
+//           icon: Icon(_isSearching ? Icons.close : Icons.search),
+//           onPressed: () => setState(() {
+//             _isSearching = !_isSearching;
+//             if (!_isSearching) _query = "";
+//           }),
+//         ),
+//       ],
+//       bottom: isTablet
+//           ? null
+//           : TabBar(
+//               dividerHeight: 0.1,
+//               controller: _tabController,
+//               isScrollable: true,
+//               indicatorColor: isDark ? Colors.white : Colors.black,
+//               labelColor: isDark ? Colors.white : Colors.black,
+//               unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
+//               labelStyle: TextStyle(fontSize: isLandscape ? 12 : 14),
+//               tabs: _navItems.map((item) => Tab(text: item['label'])).toList(),
+//             ),
+//     );
+//   }
+
+//   @override
+//   void dispose() {
+//     _tabController.dispose();
+//     _searchController.dispose();
+//     super.dispose();
+//   }
+// }
+
+// class _TutorialStepDialog extends StatelessWidget {
+//   final Map<String, dynamic> step;
+//   final int currentStep;
+//   final int totalSteps;
+//   final bool isLast;
+
+//   const _TutorialStepDialog({
+//     required this.step,
+//     required this.currentStep,
+//     required this.totalSteps,
+//     required this.isLast,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final isDark = theme.brightness == Brightness.dark;
+
+//     return Dialog(
+//       // ✅ Dark Mode: Fondo adaptativo al tema de la app
+//       backgroundColor: theme.dialogBackgroundColor,
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+//       child: Padding(
+//         padding: const EdgeInsets.all(24.0),
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Icon(step['icon'], size: 60, color: Colors.deepPurple),
+//             const SizedBox(height: 20),
+//             Text(
+//               "${step['title']} ($currentStep/$totalSteps)",
+//               // ✅ Estilo: Usa el título grande del tema
+//               style:
+//                   theme.textTheme.titleLarge?.copyWith(
+//                     fontWeight: FontWeight.bold,
+//                   ) ??
+//                   const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//               textAlign: TextAlign.center,
+//             ),
+//             const SizedBox(height: 10),
+//             Text(
+//               step['desc'],
+//               textAlign: TextAlign.center,
+//               // ✅ Dark Mode: Color de texto adaptativo
+//               style:
+//                   theme.textTheme.bodyMedium?.copyWith(
+//                     color: isDark ? Colors.white70 : Colors.black87,
+//                   ) ??
+//                   TextStyle(
+//                     fontSize: 15,
+//                     color: isDark ? Colors.white70 : Colors.black87,
+//                   ),
+//             ),
+//             const SizedBox(height: 25),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 // Botón Omitir
+//                 TextButton(
+//                   onPressed: () => Navigator.pop(context, false),
+//                   child: Text(
+//                     "Omitir",
+//                     style: TextStyle(
+//                       color: isDark ? Colors.white60 : Colors.black54,
+//                     ),
+//                   ),
+//                 ),
+//                 // Botón Siguiente / Finalizar
+//                 ElevatedButton(
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.deepPurple,
+//                     // ✅ Estilo: Asegura que el texto sea blanco siempre
+//                     foregroundColor: Colors.white,
+//                     shape: RoundedRectangleBorder(
+//                       borderRadius: BorderRadius.circular(8),
+//                     ),
+//                   ),
+//                   onPressed: () => Navigator.pop(context, true),
+//                   child: Text(isLast ? "Finalizar" : "Siguiente"),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pzplayer/core/audio/audio_provider.dart';
 
@@ -1812,7 +2202,7 @@ import 'package:pzplayer/ui/screens/genre.dart';
 import 'package:pzplayer/ui/screens/library.dart';
 import 'package:pzplayer/ui/screens/playlist.dart';
 
-import 'package:pzplayer/ui/widgets/lateral.dart'; // MainDrawer
+import 'package:pzplayer/ui/widgets/lateral.dart';
 import 'package:pzplayer/ui/widgets/player_controls.dart';
 import 'package:pzplayer/ui/widgets/utilidades.dart';
 
@@ -1831,42 +2221,21 @@ class _HomeScreenState extends State<HomeScreen>
   final TextEditingController _searchController = TextEditingController();
   String _query = "";
   bool _isSearching = false;
-  int _selectedIndex = 0;
-
-  // ESTADOS DE CONTROL
-  // Ya no necesitamos _permissionsGranted ni _isLoading para permisos aquí
-  // Solo necesitamos verificar si ya cargamos la biblioteca una vez si lo deseas,
-  // pero asumiremos que el Provider maneja el estado.
 
   final List<Map<String, dynamic>> _navItems = [
-    {
-      'label': "Biblioteca",
-      'icon': Icons.library_music,
-      'widget': const LibraryScreen(),
-    },
-    {
-      'label': "Álbum",
-      'icon': Icons.album,
-      'widget': const AlbumScreen(albumName: '', songs: []),
-    },
+    {'label': "Biblioteca", 'widget': const LibraryScreen()},
+    {'label': "Álbum", 'widget': const AlbumScreen(albumName: '', songs: [])},
     {
       'label': "Artista",
-      'icon': Icons.person,
       'widget': const ArtistScreen(artistName: '', songs: []),
     },
-    {
-      'label': "Género",
-      'icon': Icons.style,
-      'widget': GenreScreen(genreName: '', songs: []),
-    },
+    {'label': "Género", 'widget': GenreScreen(genreName: '', songs: [])},
     {
       'label': "Playlist",
-      'icon': Icons.playlist_play,
       'widget': const PlaylistScreen(playlistName: '', songs: []),
     },
     {
       'label': "Carpeta",
-      'icon': Icons.folder,
       'widget': const FolderScreen(folderName: '', songs: []),
     },
   ];
@@ -1875,32 +2244,15 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _navItems.length, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() => _selectedIndex = _tabController.index);
-      }
-    });
-
-    // Al iniciar, verificamos el tutorial.
-    // La carga de datos del AudioProvider debería ocurrir en IntroScreen o al
-    // acceder al provider por primera vez, pero si necesitas asegurarte aquí:
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkTutorialStatus();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkTutorialStatus());
   }
 
   Future<void> _checkTutorialStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    bool seen = prefs.getBool('tutorial_seen') ?? false;
-
-    // Solo mostrar tutorial si es la primera vez
-    if (!seen) {
-      // Pequeño delay para que la pantalla cargue suavemente
+    if (!(prefs.getBool('tutorial_seen') ?? false)) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
-        _showTutorialSteps().then((_) {
-          prefs.setBool('tutorial_seen', true);
-        });
+        _showTutorialSteps().then((_) => prefs.setBool('tutorial_seen', true));
       }
     }
   }
@@ -1910,30 +2262,27 @@ class _HomeScreenState extends State<HomeScreen>
       {
         "icon": Icons.menu,
         "title": "Navegación",
-        "desc":
-            "Desliza el dedo o usa el menú lateral para cambiar entre Biblioteca, Álbumes, Artistas, etc.",
+        "desc": "Usa las pestañas para navegar.",
       },
       {
         "icon": Icons.play_circle_fill,
         "title": "Reproducción",
-        "desc":
-            "Toca cualquier canción para reproducirla. Usa el menú (tres puntos) para añadir a la cola o ver detalles.",
+        "desc": "Toca cualquier canción.",
       },
       {
         "icon": Icons.headphones,
         "title": "Mini-Reproductor",
-        "desc":
-            "Cuando suena música, toca la barra inferior para abrir el reproductor completo y el ecualizador.",
+        "desc": "Toca la barra inferior.",
       },
     ];
 
     for (int i = 0; i < steps.length; i++) {
       if (!mounted) return;
-      bool shouldContinue =
+      bool proceed =
           await showDialog<bool>(
             context: context,
             barrierDismissible: false,
-            builder: (context) => _TutorialStepDialog(
+            builder: (ctx) => _TutorialStepDialog(
               step: steps[i],
               currentStep: i + 1,
               totalSteps: steps.length,
@@ -1941,8 +2290,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ) ??
           false;
-
-      if (!shouldContinue) break;
+      if (!proceed) break;
     }
   }
 
@@ -1950,145 +2298,78 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isTablet = constraints.maxWidth > 600;
-        final bool isLandscape = constraints.maxWidth > constraints.maxHeight;
-
-        return Scaffold(
-          // ✅ DRAWER: ACTIVO SIEMPRE (Móvil y Tablet)
-          drawer: const MainDrawer(),
-
-          appBar: _buildAppBar(context, isDark, isTablet, isLandscape),
-
-          body: Row(
-            children: [
-              // ✅ SIDEBAR: ACTIVO SOLO EN TABLET
-              if (isTablet) _buildCustomSidebar(isDark),
-
-              Expanded(
-                child: _isSearching && _query.isNotEmpty
-                    ? SearchResultsWidget(
-                        query: _query,
-                        audio: context.read<AudioProvider>(),
-                      )
-                    : TabBarView(
-                        controller: _tabController,
-                        physics: isTablet
-                            ? const NeverScrollableScrollPhysics()
-                            : const BouncingScrollPhysics(),
-                        children: _navItems
-                            .map<Widget>((item) => item['widget'])
-                            .toList(),
-                      ),
-              ),
-            ],
-          ),
-          bottomNavigationBar: MiniPlayer(),
-        );
-      },
-    );
-  }
-
-  // ✅ SIDEBAR PERSONALIZADO (Solo Iconos en Tablet)
-  Widget _buildCustomSidebar(bool isDark) {
-    const double sidebarWidth = 80.0;
-
-    return Container(
-      width: sidebarWidth,
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black12 : Colors.grey[100],
-        border: Border(
-          right: BorderSide(
-            color: isDark ? Colors.white10 : Colors.black12,
-            width: 1,
-          ),
-        ),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        children: _navItems.map((item) {
-          int index = _navItems.indexOf(item);
-          bool isSelected = _selectedIndex == index;
-
-          final Color itemColor = isSelected
-              ? (isDark ? Colors.white : Colors.black)
-              : (isDark ? Colors.white54 : Colors.black54);
-
-          return InkWell(
-            onTap: () {
-              setState(() {
-                _selectedIndex = index;
-              });
-              _tabController.animateTo(index);
-            },
-            child: Container(
-              color: isSelected
-                  ? (isDark ? Colors.white10 : Colors.black.withOpacity(0.05))
-                  : Colors.transparent,
-              height: 80,
-              child: Icon(item['icon'], color: itemColor, size: 62),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    bool isDark,
-    bool isTablet,
-    bool isLandscape,
-  ) {
-    // Ocultar título solo en móvil apaisado
-    final bool hideTitle = (!isTablet && isLandscape);
-
-    return AppBar(
-      // ✅ LEADING: ACTIVO SIEMPRE (Para abrir el Drawer en cualquier dispositivo)
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: Icon(_isSearching ? Icons.music_note : Icons.menu),
-          onPressed: () =>
-              _isSearching ? null : Scaffold.of(context).openDrawer(),
-        ),
-      ),
-      title: _isSearching
-          ? TextField(
-              autofocus: true,
-              onChanged: (val) => setState(() => _query = val),
-              style: TextStyle(color: isDark ? Colors.white : Colors.black),
-              decoration: InputDecoration(
-                hintText: "Buscar...",
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.white54 : Colors.black54,
+    return Scaffold(
+      drawer: const MainDrawer(),
+      body: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            SliverAppBar(
+              floating: true,
+              snap: true,
+              pinned: true,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              title: _isSearching
+                  ? _buildSearchField(isDark)
+                  : const Text("PZ Player"),
+              leading: Builder(
+                builder: (ctx) => IconButton(
+                  icon: Icon(_isSearching ? Icons.music_note : Icons.menu),
+                  onPressed: () =>
+                      _isSearching ? null : Scaffold.of(ctx).openDrawer(),
                 ),
-                border: InputBorder.none,
               ),
-            )
-          : hideTitle
-          ? null
-          : const Text("PZ Player"),
-      actions: [
-        IconButton(
-          icon: Icon(_isSearching ? Icons.close : Icons.search),
-          onPressed: () => setState(() {
-            _isSearching = !_isSearching;
-            if (!_isSearching) _query = "";
-          }),
-        ),
-      ],
-      bottom: isTablet
-          ? null
-          : TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              indicatorColor: isDark ? Colors.white : Colors.black,
-              labelColor: isDark ? Colors.white : Colors.black,
-              unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
-              labelStyle: TextStyle(fontSize: isLandscape ? 12 : 14),
-              tabs: _navItems.map((item) => Tab(text: item['label'])).toList(),
+              actions: [
+                IconButton(
+                  icon: Icon(_isSearching ? Icons.close : Icons.search),
+                  onPressed: () => setState(() {
+                    _isSearching = !_isSearching;
+                    if (!_isSearching) _query = "";
+                  }),
+                ),
+              ],
+              bottom: TabBar(
+                tabAlignment: TabAlignment.center,
+                controller: _tabController,
+                isScrollable: true,
+                dividerHeight: 0.1,
+                dividerColor: Colors.transparent,
+                indicatorColor: isDark ? Colors.white : Colors.black,
+                labelColor: isDark ? Colors.white : Colors.black,
+                unselectedLabelColor: isDark ? Colors.white54 : Colors.black54,
+                tabs: _navItems
+                    .map((item) => Tab(text: item['label']))
+                    .toList(),
+              ),
             ),
+          ];
+        },
+        // Aquí eliminamos el espacio extra
+        body: TabBarView(
+          controller: _tabController,
+          children: _navItems.map((item) {
+            return MediaQuery.removePadding(
+              context: context,
+              removeTop: true, // ESTO QUITA EL ESPACIO QUE VES EN TU FOTO
+              child: item['widget'],
+            );
+          }).toList(),
+        ),
+      ),
+      bottomNavigationBar: MiniPlayer(),
+    );
+  }
+
+  Widget _buildSearchField(bool isDark) {
+    return TextField(
+      autofocus: true,
+      onChanged: (val) => setState(() => _query = val),
+      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+      decoration: const InputDecoration(
+        hintText: "Buscar...",
+        border: InputBorder.none,
+      ),
     );
   }
 
@@ -2116,11 +2397,7 @@ class _TutorialStepDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Dialog(
-      // ✅ Dark Mode: Fondo adaptativo al tema de la app
-      backgroundColor: theme.dialogBackgroundColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -2131,51 +2408,22 @@ class _TutorialStepDialog extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               "${step['title']} ($currentStep/$totalSteps)",
-              // ✅ Estilo: Usa el título grande del tema
-              style:
-                  theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ) ??
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Text(
-              step['desc'],
-              textAlign: TextAlign.center,
-              // ✅ Dark Mode: Color de texto adaptativo
-              style:
-                  theme.textTheme.bodyMedium?.copyWith(
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ) ??
-                  TextStyle(
-                    fontSize: 15,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
-            ),
+            Text(step['desc'], textAlign: TextAlign.center),
             const SizedBox(height: 25),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Botón Omitir
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(
-                    "Omitir",
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black54,
-                    ),
-                  ),
+                  child: const Text("Omitir"),
                 ),
-                // Botón Siguiente / Finalizar
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
-                    // ✅ Estilo: Asegura que el texto sea blanco siempre
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
                   ),
                   onPressed: () => Navigator.pop(context, true),
                   child: Text(isLast ? "Finalizar" : "Siguiente"),

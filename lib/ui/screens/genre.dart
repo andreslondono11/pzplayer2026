@@ -13,6 +13,7 @@ import '../../core/theme/app_text_styles.dart';
 class GenreScreen extends StatefulWidget {
   const GenreScreen({
     super.key,
+    // Parámetros opcional para compatibilidad, aunque no se usan internamente
     required String genreName,
     required List<dynamic> songs,
   });
@@ -23,14 +24,16 @@ class GenreScreen extends StatefulWidget {
 
 class _GenreScreenState extends State<GenreScreen> {
   // --- MAPA DE CACHÉ ---
-  // Guardaremos las imágenes aquí usando el nombre del género como llave.
-  // Ejemplo: { "Rock": Uint8List(...), "Salsa": Uint8List(...) }
   final Map<String, Uint8List> _genreArtCache = {};
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AudioProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // ✅ DETECTAMOS ORIENTACIÓN PARA AJUSTAR LA CUADRÍCULA
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     final Map<String, List<MediaItem>> genresMap = provider.genres;
     final Map<String, List<MediaItem>> filteredGenres = Map.from(genresMap);
@@ -73,33 +76,57 @@ class _GenreScreenState extends State<GenreScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const double minCardWidth = 150;
-        int crossAxisCount = (constraints.maxWidth / minCardWidth).floor();
-        crossAxisCount = crossAxisCount.clamp(2, 6);
+        // ✅ AJUSTE RESPONSIVE INTELIGENTE
+        // Portrait: Calculamos basado en ancho (min 150px)
+        // Landscape: Forzamos más columnas (6 a 8) para que quepan más géneros
+
+        int crossAxisCount;
+
+        if (isLandscape) {
+          // En horizontal usamos columnas fijas altas para ver muchos cuadros pequeños
+          crossAxisCount = (constraints.maxWidth / 120).floor().clamp(6, 10);
+        } else {
+          // En vertical usamos cálculo normal
+          const double minCardWidth = 150;
+          crossAxisCount = (constraints.maxWidth / minCardWidth).floor();
+        }
+
+        crossAxisCount = crossAxisCount.clamp(2, 10);
 
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           physics: const BouncingScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            childAspectRatio: 0.78,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 20,
+            // En landscape hacemos los cuadros un poco más cuadrados/compactos
+            childAspectRatio: isLandscape ? 0.7 : 0.78,
+
+            crossAxisSpacing: isLandscape
+                ? 8
+                : 16, // Menos espacio en landscape
+            mainAxisSpacing: isLandscape ? 12 : 20,
           ),
           itemCount: sortedKeys.length,
           itemBuilder: (context, index) {
             final genreName = sortedKeys[index];
 
-            // --- TARJETA "TODAS LAS CANCIONES" ---
             if (genreName == 'Todas las Canciones') {
-              return _buildAllSongsCard(context, isDark, provider.items.length);
+              return _buildAllSongsCard(
+                context,
+                isDark,
+                provider.items.length,
+                isLandscape,
+              );
             }
 
-            // --- TARJETA DE GÉNERO NORMAL ---
             final songs = filteredGenres[genreName]!;
-
-            // 🎨 LÓGICA DE IMAGEN CON PERSISTENCIA (CACHÉ)
-            return _buildGenreCard(context, genreName, songs, isDark);
+            return _buildGenreCard(
+              context,
+              genreName,
+              songs,
+              isDark,
+              isLandscape,
+            );
           },
         );
       },
@@ -107,12 +134,12 @@ class _GenreScreenState extends State<GenreScreen> {
   }
 
   // Widget dedicado a construir la tarjeta con lógica de caché
-  // Widget dedicado a construir la tarjeta con lógica de caché
   Widget _buildGenreCard(
     BuildContext context,
     String genreName,
     List<MediaItem> songs,
     bool isDark,
+    bool isLandscape,
   ) {
     // 1. Verificar si YA TENEMOS la imagen en caché
     if (_genreArtCache.containsKey(genreName)) {
@@ -122,6 +149,7 @@ class _GenreScreenState extends State<GenreScreen> {
         songs,
         isDark,
         _genreArtCache[genreName]!,
+        isLandscape,
       );
     }
 
@@ -148,8 +176,7 @@ class _GenreScreenState extends State<GenreScreen> {
           if (snapshot.connectionState == ConnectionState.done &&
               snapshot.data != null &&
               snapshot.data!.isNotEmpty) {
-            // ✅ CORRECCIÓN DEFINITIVA: Solo guardamos en el mapa. SIN setState.
-            // El widget se redibuja automáticamente porque FutureBuilder actualizó su estado.
+            // Guardamos en caché SIN setState para evitar loops infinitos
             if (!_genreArtCache.containsKey(genreName)) {
               _genreArtCache[genreName] = snapshot.data!;
             }
@@ -160,27 +187,38 @@ class _GenreScreenState extends State<GenreScreen> {
               songs,
               isDark,
               snapshot.data!,
+              isLandscape,
             );
           }
-          // Mientras carga o falla, mostrar placeholder
-          return _buildCardPlaceholder(context, genreName, songs, isDark);
+          return _buildCardPlaceholder(
+            context,
+            genreName,
+            songs,
+            isDark,
+            isLandscape,
+          );
         },
       );
     }
 
-    // 4. Si no hay ID, mostrar placeholder directamente
-    return _buildCardPlaceholder(context, genreName, songs, isDark);
+    // 4. Si no hay ID, mostrar placeholder
+    return _buildCardPlaceholder(
+      context,
+      genreName,
+      songs,
+      isDark,
+      isLandscape,
+    );
   }
 
-  // 4. Si no hay ID, mostrar placeholder directamente
-
-  // Construye la tarjeta visual final con la imagen ya cargada
+  // Construye la tarjeta visual final con la imagen
   Widget _buildCardWithImage(
     BuildContext context,
     String genreName,
     List<MediaItem> songs,
     bool isDark,
     Uint8List imageBytes,
+    bool isLandscape,
   ) {
     return GestureDetector(
       onTap: () {
@@ -218,7 +256,7 @@ class _GenreScreenState extends State<GenreScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isLandscape ? 4 : 8), // Menos espacio en landscape
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Column(
@@ -226,23 +264,25 @@ class _GenreScreenState extends State<GenreScreen> {
               children: [
                 Text(
                   genreName,
-                  style: isDark
-                      ? AppTextStyles.bodyDark.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        )
-                      : AppTextStyles.bodyLight.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  style:
+                      (isDark
+                              ? AppTextStyles.bodyDark
+                              : AppTextStyles.bodyLight)
+                          .copyWith(
+                            fontSize: isLandscape
+                                ? 11
+                                : 14, // Fuente más pequeña en landscape
+                            fontWeight: FontWeight.w600,
+                          ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
                 Text(
                   "${songs.length} canciones",
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: isLandscape
+                        ? 9
+                        : 11, // Fuente más pequeña en landscape
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
@@ -260,6 +300,7 @@ class _GenreScreenState extends State<GenreScreen> {
     String genreName,
     List<MediaItem> songs,
     bool isDark,
+    bool isLandscape,
   ) {
     return GestureDetector(
       onTap: () {
@@ -291,7 +332,7 @@ class _GenreScreenState extends State<GenreScreen> {
               child: _buildPlaceholder(isDark, genreName),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isLandscape ? 4 : 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Column(
@@ -299,23 +340,21 @@ class _GenreScreenState extends State<GenreScreen> {
               children: [
                 Text(
                   genreName,
-                  style: isDark
-                      ? AppTextStyles.bodyDark.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        )
-                      : AppTextStyles.bodyLight.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  style:
+                      (isDark
+                              ? AppTextStyles.bodyDark
+                              : AppTextStyles.bodyLight)
+                          .copyWith(
+                            fontSize: isLandscape ? 11 : 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
                 Text(
                   "${songs.length} canciones",
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: isLandscape ? 9 : 11,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
@@ -327,7 +366,12 @@ class _GenreScreenState extends State<GenreScreen> {
     );
   }
 
-  Widget _buildAllSongsCard(BuildContext context, bool isDark, int totalSongs) {
+  Widget _buildAllSongsCard(
+    BuildContext context,
+    bool isDark,
+    int totalSongs,
+    bool isLandscape,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -360,7 +404,7 @@ class _GenreScreenState extends State<GenreScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isLandscape ? 4 : 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Column(
@@ -368,11 +412,17 @@ class _GenreScreenState extends State<GenreScreen> {
               children: [
                 Text(
                   "Todas las Canciones",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: isLandscape ? 11 : 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   "$totalSongs canciones",
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: isLandscape ? 9 : 11,
+                    color: Colors.grey,
+                  ),
                 ),
               ],
             ),

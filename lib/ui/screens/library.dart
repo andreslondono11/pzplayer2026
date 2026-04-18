@@ -93,7 +93,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       final item = _sortedItems[currentIndex];
       String letter = '#';
 
-      // 👇 CORRECCIÓN SEGURA: Verificamos longitud antes de acceder al índice
+      // 👇 CORRECCIÓN SEGURA
       if (item.title.isNotEmpty && item.title.isNotEmpty) {
         letter = item.title[0].toUpperCase();
         if (!RegExp(r'[A-Z]').hasMatch(letter)) {
@@ -113,7 +113,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     _letterIndexMap.clear();
     for (int i = 0; i < _sortedItems.length; i++) {
       final title = _sortedItems[i].title;
-      // 👇 CORRECCIÓN SEGURA AQUÍ TAMBIÉN
+      // 👇 CORRECCIÓN SEGURA
       if (title.isNotEmpty && title.isNotEmpty) {
         String letter = title[0].toUpperCase();
         if (!RegExp(r'[A-Z]').hasMatch(letter)) {
@@ -130,8 +130,6 @@ class _LibraryScreenState extends State<LibraryScreen>
   Widget build(BuildContext context) {
     final audio = Provider.of<AudioProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
 
     // 👇 MEJORA INTELIGENTE: Detección de cambios automática
     bool needsUpdate = false;
@@ -139,7 +137,6 @@ class _LibraryScreenState extends State<LibraryScreen>
     if (_sortedItems.length != audio.items.length) {
       needsUpdate = true;
     } else if (_sortedItems.isNotEmpty && audio.items.isNotEmpty) {
-      // Verificamos IDs si la longitud es igual (para detectar borrados + descargas)
       if (_sortedItems.first.id != audio.items.first.id ||
           _sortedItems.last.id != audio.items.last.id) {
         needsUpdate = true;
@@ -157,7 +154,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     return Stack(
       children: [
-        // 👇 ListView simple (Sin RefreshIndicator)
+        // 👇 ListView simple
         ListView.builder(
           controller: _scrollController,
           itemCount: _sortedItems.length,
@@ -178,7 +175,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               isDark: isDark,
               artworkCache: _artworkCache,
               onTap: () => _playSongFromLibrary(context, audio, item, index),
-              onMenuPressed: () => _showSongMenu(context, item, isLandscape),
+              onMenuPressed: () => _showSongMenu(context, item),
             );
           },
         ),
@@ -257,38 +254,30 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  // ✅ NUEVA FUNCIÓN: Maneja el Play con Registro
   void _playSongFromLibrary(
     BuildContext context,
     AudioProvider audio,
     MediaItem item,
     int index,
   ) {
-    // 1. Registramos la reproducción (Canción, Álbum, Artista, Género)
     audio.registrarReproduccionUniversal(item);
-
-    // 2. Reproducimos la lista ordenada
     audio.playItems(_sortedItems, startIndex: index);
   }
 
-  void _showSongMenu(BuildContext context, MediaItem song, bool isLandscape) {
+  void _showSongMenu(BuildContext context, MediaItem song) {
     final audio = context.read<AudioProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bool isFav = audio.isSongFavorite(song);
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: isLandscape,
-      constraints: isLandscape
-          ? BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8)
-          : null,
+      isScrollControlled: true, // Permitir scroll en el menú si es necesario
       builder: (_) => SafeArea(
         child: SingleChildScrollView(
           child: Wrap(
             children: [
               _menuTile(Icons.play_arrow, "Reproducir ahora", () {
                 Navigator.pop(context);
-                // ✅ REGISTRO AQUÍ TAMBIÉN
                 audio.registrarReproduccionUniversal(song);
                 audio.playItems([song]);
               }, isDark),
@@ -296,20 +285,15 @@ class _LibraryScreenState extends State<LibraryScreen>
                 Navigator.pop(context);
                 audio.playNext(song);
               }, isDark),
-
               _menuTile(
                 isFav ? Icons.favorite : Icons.favorite_border,
                 isFav ? "Quitar de favoritos" : "Añadir a favoritos",
                 () {
                   audio.toggleFavoriteSong(song);
-                  // Si tu _menuTile está dentro de un StatefulWidget,
-                  // probablemente necesites llamar a setState(() {}) aquí
-                  // para que el icono cambie visualmente antes de cerrar.
                   Navigator.pop(context);
                 },
                 isDark,
               ),
-
               _menuTile(Icons.favorite, "Ir a favoritos", () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -319,7 +303,6 @@ class _LibraryScreenState extends State<LibraryScreen>
                   ),
                 );
               }, isDark),
-
               _menuTile(Icons.queue_music, "Añadir a la cola", () {
                 Navigator.pop(context);
                 audio.addToQueue(song);
@@ -444,6 +427,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 }
 
 // --- WIDGETS AUXILIARES ---
+
 class _AlphabetScrollbar extends StatefulWidget {
   final List<String> alphabet;
   final Map<String, int> letterIndexMap;
@@ -470,9 +454,8 @@ class _AlphabetScrollbarState extends State<_AlphabetScrollbar> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // 1. Detectamos la orientación
-    final isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
+    // ✅ ELIMINADA LA LÓGICA RESPONSIVE
+    // El sidebar se comporta igual en vertical y horizontal
 
     return GestureDetector(
       onVerticalDragStart: (details) =>
@@ -483,23 +466,15 @@ class _AlphabetScrollbarState extends State<_AlphabetScrollbar> {
       child: Container(
         color: Colors.transparent,
         alignment: Alignment.centerRight,
-        // 2. En landscape reducimos el padding para ganar espacio
-        padding: EdgeInsets.only(
-          right: 10,
-          top: isLandscape ? 2 : 10,
-          bottom: isLandscape ? 2 : 10,
-        ),
-        // ✅ Ajuste para evitar el crash: Limitamos la altura máxima en Landscape
+        // ✅ MÁRGENES FIJOS (Verticales estándar)
+        padding: const EdgeInsets.only(right: 10, top: 10, bottom: 10),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight:
-                MediaQuery.of(context).size.height * (isLandscape ? 0.85 : 1.0),
+            maxHeight: MediaQuery.of(context).size.height, // Altura completa
           ),
           child: Column(
-            // 3. En Portrait se mantiene igual (spaceBetween), en Landscape las centramos
-            mainAxisAlignment: isLandscape
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.spaceBetween,
+            // ✅ SIEMPRE SPACEBETWEEN (Distribución normal vertical)
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: widget.alphabet.map((letter) {
               bool hasItems = widget.letterIndexMap.containsKey(letter);
@@ -507,13 +482,12 @@ class _AlphabetScrollbarState extends State<_AlphabetScrollbar> {
                   _lastSelectedLetter == letter ||
                   widget.currentActiveLetter == letter;
 
-              // ✅ Flexible permite que cada letra ceda espacio y no rompa el layout
               return Flexible(
                 child: Container(
-                  // 4. Reducimos el padding vertical en landscape para que quepan todas
-                  padding: EdgeInsets.symmetric(
+                  // ✅ PADDING VERTICAL FIJO
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 4,
-                    vertical: isLandscape ? 0.2 : 2,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: isActive
@@ -524,9 +498,9 @@ class _AlphabetScrollbarState extends State<_AlphabetScrollbar> {
                   child: Text(
                     letter,
                     style: TextStyle(
-                      // 5. Letra un poco más pequeña en landscape para evitar el choque
-                      fontSize: isLandscape ? 8.5 : 11,
-                      height: 1.0, // Mantiene el texto compacto
+                      // ✅ TAMAÑO DE LETRA FIJO (Estándar legible)
+                      fontSize: 11,
+                      height: 1.0,
                       fontWeight: FontWeight.bold,
                       color: hasItems
                           ? (isActive
@@ -547,9 +521,6 @@ class _AlphabetScrollbarState extends State<_AlphabetScrollbar> {
   void _handleDrag(BuildContext context, Offset globalPosition) {
     final RenderBox box = context.findRenderObject() as RenderBox;
     final localPosition = box.globalToLocal(globalPosition);
-
-    // El cálculo se mantiene igual porque box.size.height ya toma
-    // en cuenta el tamaño reducido por el ConstrainedBox
     final double itemHeight = box.size.height / widget.alphabet.length;
     int index = (localPosition.dy / itemHeight).floor();
 
@@ -589,9 +560,7 @@ class _SongListTile extends StatelessWidget {
         type: ArtworkType.AUDIO,
         format: ArtworkFormat.JPEG,
         size: 150,
-        // 👇 ESTO EVITA EL PARPADEO: Mantiene la imagen anterior mientras carga la nueva
         keepOldArtwork: true,
-        // 👇 EL NOMBRE CORRECTO ES 'placeholder'
         nullArtworkWidget: CircleAvatar(
           backgroundColor: isDark
               ? Colors.white.withOpacity(0.05)

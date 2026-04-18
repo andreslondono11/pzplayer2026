@@ -13,6 +13,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:path_provider/path_provider.dart';
 import 'audio_service_handler.dart';
+import 'package:audio_session/audio_session.dart';
 
 // --- Extensión para serializar MediaItem ---
 extension MediaItemJson on MediaItem {
@@ -85,8 +86,12 @@ class AudioProvider extends ChangeNotifier {
   // --- DEPENDENCIAS ---
   final OnAudioQuery _audioQuery = OnAudioQuery();
   final AudioHandler handler;
-  final _equalizer = AndroidEqualizer();
-
+  // final _equalizer = AndroidEqualizer();
+  AndroidEqualizer? _equalizer;
+  AudioPipeline? _pipeline;
+  AudioSession? _audioSession;
+  bool _isEqualizerEnabled = false;
+  List<double> _currentEGBands = List.filled(5, 0.5);
   // --- CAJAS DE HIVE (BOXES) ---
   late Box _libraryBox;
   late Box _playlistsBox;
@@ -104,8 +109,8 @@ class AudioProvider extends ChangeNotifier {
   final Map<String, List<MediaItem>> _playlists = {};
 
   // --- ECUALIZADOR ---
-  bool _isEqualizerEnabled = true;
-  List<double> _currentEGBands = [0.5, 0.5, 0.5, 0.5, 0.5];
+  // bool _isEqualizerEnabled = true;
+  // List<double> _currentEGBands = [0.5, 0.5, 0.5, 0.5, 0.5];
 
   // --- SISTEMA ---
   Timer? _libraryCheckTimer;
@@ -577,6 +582,8 @@ class AudioProvider extends ChangeNotifier {
         ConcatenatingAudioSource(children: sources),
         initialIndex: startIndex,
       );
+      _setupEqualizer();
+
       await h.player.play();
     } catch (e) {
       print("❌ Error en playItems: $e");
@@ -648,30 +655,159 @@ class AudioProvider extends ChangeNotifier {
 
   // ==========================================
   // ECUALIZADOR
-  // ==========================================
+
+  // Future<void> _setupEqualizer() async {
+  //   try {
+  //     // 1. Instanciamos el efecto (Sin parámetros si el constructor falla)
+  //     _equalizer = AndroidEqualizer();
+
+  //     // 2. Lo habilitamos físicamente
+  //     await _equalizer.setEnabled(true);
+
+  //     // 3. Aplicamos los valores que ya tienes en la UI del PZ Player
+  //     if (_isEqualizerEnabled) {
+  //       setFullPreset(_currentEGBands);
+  //     }
+
+  //     print("✅ [EQ] Hardware de ecualización listo.");
+  //   } catch (e) {
+  //     print("❌ [EQ] Error de inicialización: $e");
+  //   }
+  // }
+  // void toggleEqualizer(bool value) {
+  //   _isEqualizerEnabled = value;
+  //   notifyListeners();
+  // }
+
+  //  void setBandGain(int bandIndex, double sliderValue) {
+  //     double safeValue = sliderValue.clamp(0.0, 1.0);
+  //     _currentEGBands[bandIndex] = safeValue;
+  //     if (_isEqualizerEnabled) _applyEffect(bandIndex, safeValue);
+  //     notifyListeners();
+  //   }
+
+  // void toggleEqualizer(bool value) async {
+  //   _isEqualizerEnabled = value;
+
+  //   try {
+  //     if (_equalizer != null) {
+  //       await _equalizer!.setEnabled(value);
+  //     }
+
+  //     // Usamos el '?' para evitar el error si no se ha inicializado
+  //     await _audioSession?.setActive(value);
+
+  //     if (value) {
+  //       setFullPreset(_currentEGBands);
+  //     }
+  //   } catch (e) {
+  //     print("❌ [EQ] Error en switch: $e");
+  //   }
+  //   notifyListeners();
+  // }
+  //   void _applyEffect(int index, double value) async {
+  //   // Conversión: 0.0 a 1.0 -> -1500 a +1500 mB
+  //   double milliBelios = (value * 3000.0) - 1500.0;
+
+  //   try {
+  //     // Si no usamos await aquí, el comando puede perderse
+  //     final params = await _equalizer.parameters;
+
+  //     if (index < params.bands.length) {
+  //       await params.bands[index].setGain(milliBelios);
+  //       // LOG DE CONFIRMACIÓN REAL
+  //       print("🎯 Hardware actualizó Banda $index a $milliBelios mB");
+  //     }
+  //   } catch (e) {
+  //     print("❌ El hardware rechazó el cambio: $e");
+  //   }
+  // }
+
+  //   void setFullPreset(List<double> newBands) {
+  //     _currentEGBands = List.from(newBands);
+  //     if (_isEqualizerEnabled) {
+  //       for (int i = 0; i < _currentEGBands.length; i++) {
+  //         _applyEffect(i, _currentEGBands[i]);
+  //       }
+  //     }
+  //     notifyListeners();
+  //   }
+
+  // --- VARIABLES DE CLASE ---
+
+  // --- 1. INICIALIZACIÓN INICIAL ---
+  Future<void> initAudio() async {
+    try {
+      // Inicializamos la sesión de audio del sistema
+      _audioSession = await AudioSession.instance;
+      await _audioSession!.configure(const AudioSessionConfiguration.music());
+
+      // Instanciamos el ecualizador
+      _equalizer ??= AndroidEqualizer();
+
+      // Configuramos el pipeline (IMPORTANTE: Verifica si tu versión usa 'androidAudioEffects' o solo 'effects')
+      _pipeline = AudioPipeline(androidAudioEffects: [_equalizer!]);
+
+      print("🚀 [Audio] Sistema e hilos de efectos inicializados.");
+    } catch (e) {
+      print("❌ [Audio] Error en initAudio: $e");
+    }
+  }
+
+  // --- 2. CONFIGURACIÓN DEL HARDWARE ---
+  Future<void> _setupEqualizer() async {
+    final player = (handler as AudioServiceHandler).player;
+
+    // Intento 1: ID específico del player
+    int sessionId = player.androidAudioSessionId ?? 0;
+
+    // Si el ID específico no captura el audio, forzamos la creación del objeto
+    _equalizer ??= AndroidEqualizer();
+
+    try {
+      await _equalizer!.setEnabled(true);
+
+      // Forzamos un refresco de los parámetros
+      final p = await _equalizer!.parameters;
+      print("✅ [EQ] Conectado. Bandas disponibles: ${p.bands.length}");
+
+      if (_isEqualizerEnabled) {
+        setFullPreset(_currentEGBands);
+      }
+    } catch (e) {
+      print("❌ Error vinculando hardware: $e");
+    }
+  }
+
+  // --- 3. CONTROLES DE LA UI ---
+  void toggleEqualizer(bool value) async {
+    _isEqualizerEnabled = value;
+
+    try {
+      if (_equalizer != null) {
+        await _equalizer!.setEnabled(value);
+      }
+
+      // Activamos la sesión para permitir efectos en segundo plano (ideal para tu vivo)
+      await _audioSession?.setActive(value);
+
+      if (value) {
+        setFullPreset(_currentEGBands);
+      }
+    } catch (e) {
+      print("❌ [EQ] Error en switch: $e");
+    }
+    notifyListeners();
+  }
+
   void setBandGain(int bandIndex, double sliderValue) {
     double safeValue = sliderValue.clamp(0.0, 1.0);
     _currentEGBands[bandIndex] = safeValue;
-    if (_isEqualizerEnabled) _applyEffect(bandIndex, safeValue);
-    notifyListeners();
-  }
 
-  void toggleEqualizer(bool value) {
-    _isEqualizerEnabled = value;
-    notifyListeners();
-  }
-
-  void _applyEffect(int index, double value) {
-    double milliBelios = (value * 3000.0) - 1500.0;
-    try {
-      _equalizer.parameters.then((params) {
-        if (index < params.bands.length) {
-          params.bands[index].setGain(milliBelios);
-        }
-      });
-    } catch (e) {
-      print("⚠️ Error aplicando efecto ecualizador: $e");
+    if (_isEqualizerEnabled) {
+      _applyEffect(bandIndex, safeValue);
     }
+    notifyListeners();
   }
 
   void setFullPreset(List<double> newBands) {
@@ -682,6 +818,36 @@ class AudioProvider extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  // --- 4. APLICACIÓN REAL AL CHIP DE AUDIO ---
+  void _applyEffect(int index, double value) async {
+    if (_equalizer == null) return;
+
+    // 1. Rango extremo: +/- 20dB (Si esto no se escucha, nada se escuchará)
+    double milliBelios = (value * 4000.0) - 2000.0;
+
+    try {
+      // 2. FORZAR el encendido en cada movimiento
+      await _equalizer!.setEnabled(true);
+
+      final params = await _equalizer!.parameters;
+
+      // Si params está vacío, es que el motor de audio nos desconectó
+      if (params.bands.isEmpty) {
+        print("❌ [EQ] Hardware sin bandas. Intentando reconexión...");
+        await _setupEqualizer();
+        return;
+      }
+
+      if (index < params.bands.length) {
+        await params.bands[index].setGain(milliBelios);
+        // Este log es vital para saber si el comando llegó al chip
+        print("🔥 [HARDWARE] Banda $index aplicada: $milliBelios mB");
+      }
+    } catch (e) {
+      print("❌ Error de comunicación con el driver: $e");
+    }
   }
 
   // ==========================================
